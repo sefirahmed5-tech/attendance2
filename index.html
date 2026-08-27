@@ -192,6 +192,17 @@
             min-width: 0;
         }
 
+        .plan-error {
+            color: #c62828;
+            font-size: 12px;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .plan-error.show {
+            display: block;
+        }
+
         .student-actions {
             display: flex;
             gap: 8px;
@@ -260,6 +271,13 @@
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
         .btn-save-all {
@@ -477,13 +495,19 @@ const PAGES = Array.from({ length: 48 }, (_, i) => i + 1);
 let currentAttendance = {};
 let currentZikir = {};
 let currentQuranPlans = {};
-let isSaving = false;
+
+const savingState = {};
 
 function getTodayStr() {
     const d = new Date();
     return d.getFullYear() + "-" +
         String(d.getMonth() + 1).padStart(2, "0") + "-" +
         String(d.getDate()).padStart(2, "0");
+}
+
+function surahIndex(surahLabel) {
+    const n = parseInt(surahLabel, 10);
+    return isNaN(n) ? null : n;
 }
 
 function showStatus(message, type = "info") {
@@ -500,8 +524,7 @@ function updateSyncStatus(online) {
 
 async function checkConnection() {
     try {
-        await db.ref("test").set({ test: true });
-        await db.ref("test").remove();
+        await db.ref(".info/connected").once("value");
         updateSyncStatus(true);
         return true;
     } catch (e) {
@@ -510,24 +533,35 @@ async function checkConnection() {
     }
 }
 
-// ============ NEW: Save Individual Student Attendance ============
+function setButtonBusy(btn, busy, busyLabel, normalLabel) {
+    if (!btn) return;
+    btn.disabled = busy;
+    btn.textContent = busy ? busyLabel : normalLabel;
+}
+
 async function saveStudentAttendance(name, dateKey) {
-    if (isSaving) return;
-    isSaving = true;
+    const stateKey = "att-" + name;
+    if (savingState[stateKey]) return;
+    savingState[stateKey] = true;
+
+    const btn = document.getElementById("saveAttBtn-" + name);
+    setButtonBusy(btn, true, "Saving...", "💾 Save Attendance");
 
     try {
-        // Get current data for this date
+        if (currentAttendance[name] === undefined) {
+            showStatus(`⚠️ Please select a status for ${name} first`, "error");
+            return;
+        }
+
         const snapshot = await db.ref("attendance/" + dateKey).once("value");
         const existingData = snapshot.val() || {};
-        
-        // Update only this student's data
+
         const updatedRecords = existingData.records || {};
-        updatedRecords[name] = currentAttendance[name] || "absent";
-        
+        updatedRecords[name] = currentAttendance[name];
+
         const updatedZikir = existingData.weeklyZikir || {};
         updatedZikir[name] = currentZikir[name] || false;
 
-        // Save back to Firebase
         await db.ref("attendance/" + dateKey).set({
             date: dateKey,
             records: updatedRecords,
@@ -536,41 +570,72 @@ async function saveStudentAttendance(name, dateKey) {
         });
 
         showStatus(`✅ ${name}'s attendance saved!`, "success");
-        renderStudents(); // Refresh to show saved status
+        renderStudents();
         await loadHistory();
-        return true;
 
     } catch (e) {
         showStatus(`❌ Error saving ${name}: ${e.message}`, "error");
-        return false;
-
     } finally {
-        isSaving = false;
+        savingState[stateKey] = false;
+        setButtonBusy(btn, false, "Saving...", "💾 Save Attendance");
     }
 }
 
-// ============ NEW: Save Individual Student Quran Plan ============
 async function saveStudentQuranPlan(name) {
+    const stateKey = "plan-" + name;
+    if (savingState[stateKey]) return;
+
     const currentSurah = document.getElementById("currentSurah-" + name);
     const currentPage = document.getElementById("currentPage-" + name);
     const targetSurah = document.getElementById("targetSurah-" + name);
     const targetPage = document.getElementById("targetPage-" + name);
+    const errorEl = document.getElementById("planError-" + name);
 
     if (!currentSurah || !currentPage || !targetSurah || !targetPage) {
         showStatus(`⚠️ Please complete all fields for ${name}`, "error");
         return;
     }
 
-    if (!currentSurah.value || !targetSurah.value) {
+    if (!currentSurah.value || !targetSurah.value || !currentPage.value || !targetPage.value) {
         showStatus(`⚠️ Please select Surah and Page for ${name}`, "error");
         return;
     }
 
+    const curSurahNum = surahIndex(currentSurah.value);
+    const tgtSurahNum = surahIndex(targetSurah.value);
+    const curPageNum = Number(currentPage.value);
+    const tgtPageNum = Number(targetPage.value);
+
+    if (isNaN(curPageNum) || isNaN(tgtPageNum)) {
+        showStatus(`⚠️ Page values must be numbers for ${name}`, "error");
+        return;
+    }
+
+    const movesForward =
+        tgtSurahNum > curSurahNum ||
+        (tgtSurahNum === curSurahNum && tgtPageNum > curPageNum);
+
+    if (!movesForward) {
+        if (errorEl) {
+            errorEl.textContent = "⚠️ Target position must be after the current position";
+            errorEl.classList.add("show");
+        }
+        showStatus(`⚠️ ${name}'s target must come after their current position`, "error");
+        return;
+    } else if (errorEl) {
+        errorEl.classList.remove("show");
+        errorEl.textContent = "";
+    }
+
+    savingState[stateKey] = true;
+    const btn = document.getElementById("savePlanBtn-" + name);
+    setButtonBusy(btn, true, "Saving...", "📖 Save Plan");
+
     const plan = {
         currentSurah: currentSurah.value,
-        currentPage: Number(currentPage.value),
+        currentPage: curPageNum,
         targetSurah: targetSurah.value,
-        targetPage: Number(targetPage.value),
+        targetPage: tgtPageNum,
         updatedAt: firebase.database.ServerValue.TIMESTAMP
     };
 
@@ -581,13 +646,27 @@ async function saveStudentQuranPlan(name) {
         renderStudents();
     } catch (e) {
         showStatus(`❌ Error saving ${name}'s plan: ${e.message}`, "error");
+    } finally {
+        savingState[stateKey] = false;
+        setButtonBusy(btn, false, "Saving...", "📖 Save Plan");
     }
 }
 
-// ============ Save All Attendance ============
 async function saveAllAttendance(dateKey) {
-    if (isSaving) return;
-    isSaving = true;
+    const stateKey = "att-all";
+    if (savingState[stateKey]) return;
+    savingState[stateKey] = true;
+
+    const btn = document.getElementById("saveAllBtn");
+    setButtonBusy(btn, true, "Saving...", "💾 Save All Attendance");
+
+    const missing = STUDENTS.filter(name => currentAttendance[name] === undefined);
+    if (missing.length > 0) {
+        showStatus(`⚠️ Missing status for: ${missing.join(", ")}`, "error");
+        savingState[stateKey] = false;
+        setButtonBusy(btn, false, "Saving...", "💾 Save All Attendance");
+        return false;
+    }
 
     try {
         await db.ref("attendance/" + dateKey).set({
@@ -607,54 +686,88 @@ async function saveAllAttendance(dateKey) {
         return false;
 
     } finally {
-        isSaving = false;
+        savingState[stateKey] = false;
+        setButtonBusy(btn, false, "Saving...", "💾 Save All Attendance");
     }
 }
 
-// ============ Save All Quran Plans ============
 async function saveAllQuranPlans() {
+    const stateKey = "plan-all";
+    if (savingState[stateKey]) return;
+    savingState[stateKey] = true;
+
+    const btn = document.getElementById("saveAllPlansBtn");
+    setButtonBusy(btn, true, "Saving...", "📖 Save All Plans");
     showStatus("💾 Saving all Quran plans...", "loading");
 
     try {
         let savedCount = 0;
-        
+        const skipped = [];
+
         for (const name of STUDENTS) {
             const currentSurah = document.getElementById("currentSurah-" + name);
             const currentPage = document.getElementById("currentPage-" + name);
             const targetSurah = document.getElementById("targetSurah-" + name);
             const targetPage = document.getElementById("targetPage-" + name);
-            
-            if (currentSurah && currentSurah.value && targetSurah && targetSurah.value) {
-                await db.ref("quranPlans/" + name).set({
-                    currentSurah: currentSurah.value,
-                    currentPage: Number(currentPage.value),
-                    targetSurah: targetSurah.value,
-                    targetPage: Number(targetPage.value),
-                    updatedAt: firebase.database.ServerValue.TIMESTAMP
-                });
-                savedCount++;
+
+            if (!currentSurah || !currentSurah.value || !targetSurah || !targetSurah.value ||
+                !currentPage.value || !targetPage.value) {
+                skipped.push(name);
+                continue;
             }
+
+            const curSurahNum = surahIndex(currentSurah.value);
+            const tgtSurahNum = surahIndex(targetSurah.value);
+            const curPageNum = Number(currentPage.value);
+            const tgtPageNum = Number(targetPage.value);
+
+            if (isNaN(curPageNum) || isNaN(tgtPageNum)) {
+                skipped.push(name);
+                continue;
+            }
+
+            const movesForward =
+                tgtSurahNum > curSurahNum ||
+                (tgtSurahNum === curSurahNum && tgtPageNum > curPageNum);
+
+            if (!movesForward) {
+                skipped.push(name);
+                continue;
+            }
+
+            await db.ref("quranPlans/" + name).set({
+                currentSurah: currentSurah.value,
+                currentPage: curPageNum,
+                targetSurah: targetSurah.value,
+                targetPage: tgtPageNum,
+                updatedAt: firebase.database.ServerValue.TIMESTAMP
+            });
+            savedCount++;
         }
 
         if (savedCount === 0) {
-            showStatus("⚠️ No complete plans to save", "error");
+            showStatus("⚠️ No complete/valid plans to save", "error");
+        } else if (skipped.length > 0) {
+            showStatus(`✅ Saved ${savedCount} plans. Skipped (incomplete/invalid): ${skipped.join(", ")}`, "info");
         } else {
             showStatus(`✅ Saved ${savedCount} Quran plans!`, "success");
-            await loadQuranPlans();
-            renderStudents();
         }
+
+        await loadQuranPlans();
+        renderStudents();
 
     } catch (e) {
         showStatus("❌ Error saving plans: " + e.message, "error");
+    } finally {
+        savingState[stateKey] = false;
+        setButtonBusy(btn, false, "Saving...", "📖 Save All Plans");
     }
 }
 
-// ============ Load Data ============
 async function loadFromFirebase(dateKey) {
     showStatus("📥 Loading data...", "loading");
 
     try {
-        // Load attendance
         const snapshot = await db.ref("attendance/" + dateKey).once("value");
         const data = snapshot.val();
 
@@ -666,9 +779,8 @@ async function loadFromFirebase(dateKey) {
             currentZikir = {};
         }
 
-        // Load Quran plans
         await loadQuranPlans();
-        
+
         renderStudents();
         showStatus(`✅ Loaded data for ${dateKey}`, "success");
         return true;
@@ -688,7 +800,63 @@ async function loadQuranPlans() {
     }
 }
 
-// ============ Render Students ============
+async function loadHistory() {
+    const historyList = document.getElementById("historyList");
+
+    try {
+        const snapshot = await db.ref("attendance").once("value");
+        const allData = snapshot.val();
+
+        if (!allData) {
+            historyList.innerHTML = '<div class="empty-msg">No records yet</div>';
+            return;
+        }
+
+        const dates = Object.keys(allData).sort((a, b) => b.localeCompare(a));
+
+        historyList.innerHTML = "";
+        dates.forEach(dateKey => {
+            const entry = allData[dateKey];
+            const records = entry.records || {};
+            const presentCount = Object.values(records).filter(s => s === "present").length;
+            const total = Object.keys(records).length;
+
+            const item = document.createElement("div");
+            item.className = "history-item";
+            item.innerHTML = `
+                <span class="date">${dateKey}</span>
+                <span class="summary">${presentCount}/${total} present</span>
+            `;
+            item.addEventListener("click", () => {
+                document.getElementById("attDate").value = dateKey;
+                loadFromFirebase(dateKey);
+            });
+            historyList.appendChild(item);
+        });
+
+    } catch (e) {
+        historyList.innerHTML = `<div class="empty-msg">Error loading history: ${e.message}</div>`;
+    }
+}
+
+function buildSurahOptions(selectedValue) {
+    let html = '<option value="">Select Surah</option>';
+    SURAHS.forEach(s => {
+        const sel = s === selectedValue ? "selected" : "";
+        html += `<option value="${s}" ${sel}>${s}</option>`;
+    });
+    return html;
+}
+
+function buildPageOptions(selectedValue) {
+    let html = '<option value="">Select Page</option>';
+    PAGES.forEach(p => {
+        const sel = Number(selectedValue) === p ? "selected" : "";
+        html += `<option value="${p}" ${sel}>Page ${p}</option>`;
+    });
+    return html;
+}
+
 function renderStudents() {
     const list = document.getElementById("studentList");
     list.innerHTML = "";
@@ -698,10 +866,6 @@ function renderStudents() {
         const hasAttendance = currentAttendance[name] !== undefined;
         const hasPlan = plan.currentSurah && plan.targetSurah;
 
-        const card = document.createElement("div");
-        card.className = "student-card";
-
-        // Status badge
         let badgeText = "Not saved";
         let badgeClass = "";
         if (hasAttendance && hasPlan) {
@@ -712,264 +876,150 @@ function renderStudents() {
             badgeClass = "partial";
         }
 
+        const card = document.createElement("div");
+        card.className = "student-card";
+
         card.innerHTML = `
             <div class="student-name">
                 <span>${name}</span>
                 <span class="student-status-badge ${badgeClass}">${badgeText}</span>
             </div>
-            <div class="options"></div>
-            <div class="zikir-row"></div>
-            <div class="quran-plan">
-                <div class="quran-plan-title">📖 15-Day Quran Plan</div>
-                <span class="plan-label">📍 Current Position</span>
-                <div class="plan-row">
-                    <select id="currentSurah-${name}">
-                        ${createSurahOptions(plan.currentSurah)}
-                    </select>
-                    <select id="currentPage-${name}">
-                        ${createPageOptions(plan.currentPage)}
-                    </select>
-                </div>
-                <span class="plan-label">🎯 Position After 15 Days</span>
-                <div class="plan-row">
-                    <select id="targetSurah-${name}">
-                        ${createSurahOptions(plan.targetSurah)}
-                    </select>
-                    <select id="targetPage-${name}">
-                        ${createPageOptions(plan.targetPage)}
-                    </select>
-                </div>
+
+            <div class="options">
+                ${STATUS_OPTIONS.map(opt => `
+                    <button
+                        class="opt-btn ${opt.key} ${currentAttendance[name] === opt.key ? "active" : ""}"
+                        data-name="${name}"
+                        data-status="${opt.key}"
+                    >${opt.label}</button>
+                `).join("")}
             </div>
+
+            <div class="zikir-row">
+                <button class="zikir-btn ${currentZikir[name] ? "active" : ""}" data-name="${name}">
+                    ${currentZikir[name] ? "🕌 Weekly Zikir: Done" : "🕌 Mark Weekly Zikir"}
+                </button>
+            </div>
+
             <div class="student-actions">
-                <button class="save-student-btn attendance" id="saveAtt-${name}">
+                <button class="save-student-btn attendance" id="saveAttBtn-${name}" data-name="${name}">
                     💾 Save Attendance
                 </button>
-                <button class="save-student-btn plan" id="savePlan-${name}">
-                    📖 Save Plan
-                </button>
+            </div>
+
+            <div class="quran-plan">
+                <div class="quran-plan-title">📖 15-Day Quran Plan</div>
+
+                <span class="plan-label">📍 Current Position</span>
+                <div class="plan-row">
+                    <select id="currentSurah-${name}">${buildSurahOptions(plan.currentSurah)}</select>
+                    <select id="currentPage-${name}">${buildPageOptions(plan.currentPage)}</select>
+                </div>
+
+                <span class="plan-label">🎯 Target Position</span>
+                <div class="plan-row">
+                    <select id="targetSurah-${name}">${buildSurahOptions(plan.targetSurah)}</select>
+                    <select id="targetPage-${name}">${buildPageOptions(plan.targetPage)}</select>
+                </div>
+
+                <div class="plan-error" id="planError-${name}"></div>
+
+                <div class="student-actions">
+                    <button class="save-student-btn plan" id="savePlanBtn-${name}" data-name="${name}">
+                        📖 Save Plan
+                    </button>
+                </div>
             </div>
         `;
 
-        // Add attendance options
-        const optionsDiv = card.querySelector(".options");
-        STATUS_OPTIONS.forEach(opt => {
-            const btn = document.createElement("button");
-            btn.type = "button";
-            btn.className = "opt-btn " + opt.key;
-            if (currentAttendance[name] === opt.key) {
-                btn.classList.add("active");
-            }
-            btn.textContent = opt.label;
-            btn.onclick = () => {
-                currentAttendance[name] = opt.key;
-                renderStudents();
-            };
-            optionsDiv.appendChild(btn);
-        });
+        list.appendChild(card);
+    });
 
-        // Add zikir button
-        const zikirRow = card.querySelector(".zikir-row");
-        const zikirBtn = document.createElement("button");
-        zikirBtn.type = "button";
-        zikirBtn.className = "zikir-btn";
-        if (currentZikir[name]) {
-            zikirBtn.classList.add("active");
-            zikirBtn.textContent = "📿 Weekly Zikir: Recited ✓";
-        } else {
-            zikirBtn.textContent = "📿 Weekly Zikir";
-        }
-        zikirBtn.onclick = () => {
+    attachStudentEventListeners();
+}
+
+function attachStudentEventListeners() {
+    document.querySelectorAll(".opt-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const name = btn.dataset.name;
+            const status = btn.dataset.status;
+            currentAttendance[name] = status;
+            renderStudents();
+        });
+    });
+
+    document.querySelectorAll(".zikir-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const name = btn.dataset.name;
             currentZikir[name] = !currentZikir[name];
             renderStudents();
-        };
-        zikirRow.appendChild(zikirBtn);
-
-        list.appendChild(card);
-
-        // Add event listeners for individual saves
-        document.getElementById(`saveAtt-${name}`).onclick = () => {
-            const dateKey = document.getElementById("attDate").value;
-            if (!dateKey) {
-                showStatus("⚠️ Please select a date", "error");
-                return;
-            }
-            saveStudentAttendance(name, dateKey);
-        };
-
-        document.getElementById(`savePlan-${name}`).onclick = () => {
-            saveStudentQuranPlan(name);
-        };
-    });
-}
-
-function createSurahOptions(selected) {
-    let html = '<option value="">Select Surah</option>';
-    SURAHS.forEach(surah => {
-        html += '<option value="' + surah + '"' +
-            (surah === selected ? ' selected' : '') +
-            '>' + surah + '</option>';
-    });
-    return html;
-}
-
-function createPageOptions(selected) {
-    let html = '<option value="">Select Page</option>';
-    PAGES.forEach(page => {
-        html += '<option value="' + page + '"' +
-            (Number(page) === Number(selected) ? ' selected' : '') +
-            '>Page ' + page + '</option>';
-    });
-    return html;
-}
-
-function loadHistory() {
-    const historyList = document.getElementById("historyList");
-    historyList.innerHTML = '<div class="empty-msg">Loading...</div>';
-
-    return db.ref("attendance").orderByKey().limitToLast(30).once("value")
-        .then(snapshot => {
-            const data = snapshot.val();
-
-            if (!data) {
-                historyList.innerHTML = '<div class="empty-msg">No attendance saved yet</div>';
-                return;
-            }
-
-            historyList.innerHTML = "";
-
-            Object.keys(data).sort().reverse().forEach(dateKey => {
-                const record = data[dateKey];
-                const records = record.records || {};
-
-                const present = STUDENTS.filter(n => records[n] === "present").length;
-                const absent = STUDENTS.filter(n => records[n] === "absent").length;
-                const permission = STUDENTS.filter(n => records[n] === "permission").length;
-                const zikir = STUDENTS.filter(n =>
-                    record.weeklyZikir && record.weeklyZikir[n]
-                ).length;
-
-                const item = document.createElement("div");
-                item.className = "history-item";
-                item.innerHTML =
-                    '<span class="date">' + dateKey + '</span>' +
-                    '<span class="summary">P:' + present +
-                    ' A:' + absent +
-                    ' Pe:' + permission +
-                    ' 📿:' + zikir + '</span>';
-
-                item.onclick = () => {
-                    document.getElementById("attDate").value = dateKey;
-                    loadFromFirebase(dateKey);
-                };
-
-                historyList.appendChild(item);
-            });
-        })
-        .catch(e => {
-            historyList.innerHTML = '<div class="empty-msg">Error loading history</div>';
-            console.error(e);
         });
+    });
+
+    document.querySelectorAll(".save-student-btn.attendance").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const name = btn.dataset.name;
+            const dateKey = document.getElementById("attDate").value || getTodayStr();
+            saveStudentAttendance(name, dateKey);
+        });
+    });
+
+    document.querySelectorAll(".save-student-btn.plan").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const name = btn.dataset.name;
+            saveStudentQuranPlan(name);
+        });
+    });
 }
 
-function getAttendanceText() {
-    const dateKey = document.getElementById("attDate").value;
-
-    const labels = {
-        present: "Present ✅",
-        absent: "Absent ❌",
-        permission: "Permission 📝"
-    };
-
-    let text = "📋 ATTENDANCE REPORT\n";
-    text += "📅 Date: " + dateKey + "\n";
-    text += "=".repeat(30) + "\n\n";
-
+function generateReportText(dateKey) {
+    let text = `📋 Attendance Report - ${dateKey}\n\n`;
     STUDENTS.forEach(name => {
         const status = currentAttendance[name] || "Not marked";
-        const zikir = currentZikir[name] ? " | 📿 Recited" : "";
-        text += name + ": " + (labels[status] || "Not marked") + zikir + "\n";
+        const zikir = currentZikir[name] ? "Done" : "Not done";
+        text += `${name}: ${status} | Weekly Zikir: ${zikir}\n`;
     });
-
-    text += "\n📖 15-DAY QURAN PLANS\n";
-    text += "=".repeat(30) + "\n\n";
-
-    STUDENTS.forEach(name => {
-        const plan = currentQuranPlans[name];
-        if (plan && plan.currentSurah && plan.targetSurah) {
-            text += name + ":\n";
-            text += "  📍 Current: " + plan.currentSurah + " (Page " + plan.currentPage + ")\n";
-            text += "  🎯 Target: " + plan.targetSurah + " (Page " + plan.targetPage + ")\n\n";
-        } else {
-            text += name + ": No plan set\n\n";
-        }
-    });
-
-    text += "=".repeat(30) + "\n";
-    text += "Total Students: " + STUDENTS.length + "\n";
-    text += "Present: " + STUDENTS.filter(n => currentAttendance[n] === "present").length + "\n";
-    text += "Absent: " + STUDENTS.filter(n => currentAttendance[n] === "absent").length + "\n";
-    text += "Permission: " + STUDENTS.filter(n => currentAttendance[n] === "permission").length + "\n";
-    text += "Zikir Recited: " + STUDENTS.filter(n => currentZikir[n]).length + "\n";
-
     return text;
 }
 
-function shareToTelegram() {
-    const dateKey = document.getElementById("attDate").value;
-
-    if (!dateKey) {
-        showStatus("⚠️ Please select a date first!", "error");
-        return;
-    }
-
-    const text = getAttendanceText();
-    const encodedText = encodeURIComponent(text);
-    const telegramUrl = "https://t.me/share/url?url=" + encodedText + "&text=" + encodedText;
-    window.open(telegramUrl, "_blank");
-    showStatus("📤 Opening Telegram...", "info");
-}
-
-// ============ INITIALIZATION ============
-document.addEventListener("DOMContentLoaded", async function() {
-    const today = getTodayStr();
-    document.getElementById("attDate").value = today;
+document.addEventListener("DOMContentLoaded", async () => {
+    const dateInput = document.getElementById("attDate");
+    dateInput.value = getTodayStr();
 
     await checkConnection();
-    await loadQuranPlans();
-    await loadFromFirebase(today);
+    await loadFromFirebase(dateInput.value);
     await loadHistory();
 
-    // Set up event listeners
-    document.getElementById("saveAllBtn").onclick = async function() {
-        const dateKey = document.getElementById("attDate").value;
-        if (!dateKey) {
-            showStatus("⚠️ Please select a date", "error");
-            return;
+    dateInput.addEventListener("change", () => {
+        loadFromFirebase(dateInput.value);
+    });
+
+    document.getElementById("saveAllBtn").addEventListener("click", () => {
+        saveAllAttendance(dateInput.value);
+    });
+
+    document.getElementById("saveAllPlansBtn").addEventListener("click", () => {
+        saveAllQuranPlans();
+    });
+
+    document.getElementById("loadBtn").addEventListener("click", () => {
+        loadFromFirebase(dateInput.value);
+    });
+
+    document.getElementById("shareBtn").addEventListener("click", () => {
+        const text = generateReportText(dateInput.value);
+        if (navigator.share) {
+            navigator.share({ title: "Attendance Report", text });
+        } else {
+            navigator.clipboard.writeText(text).then(() => {
+                showStatus("📋 Report copied to clipboard!", "success");
+            }).catch(() => {
+                showStatus("⚠️ Could not copy report automatically. Please copy manually.", "error");
+            });
         }
-        await saveAllAttendance(dateKey);
-    };
-
-    document.getElementById("saveAllPlansBtn").onclick = saveAllQuranPlans;
-
-    document.getElementById("loadBtn").onclick = async function() {
-        const dateKey = document.getElementById("attDate").value;
-        if (!dateKey) {
-            showStatus("⚠️ Please select a date", "error");
-            return;
-        }
-        await loadFromFirebase(dateKey);
-        await loadHistory();
-    };
-
-    document.getElementById("shareBtn").onclick = shareToTelegram;
-
-    document.getElementById("attDate").onchange = async function() {
-        await loadFromFirebase(this.value);
-    };
-
-    setInterval(checkConnection, 30000);
+    });
 });
-
 </script>
+
 </body>
 </html>
