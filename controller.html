@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>👨‍💼 Controller Attendance</title>
+<title>👨‍💼 Controller - Attendance</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -19,8 +19,8 @@
 body {
     font-family: Arial, sans-serif;
     background: #f0f2f5;
-    padding: 20px;
-    max-width: 800px;
+    padding: 15px;
+    max-width: 850px;
     margin: auto;
 }
 
@@ -33,6 +33,7 @@ body {
 
 h1 {
     color: #1a237e;
+    font-size: 25px;
     margin-bottom: 5px;
 }
 
@@ -42,11 +43,11 @@ h1 {
     margin-bottom: 20px;
 }
 
-.top-section {
+.date-panel {
     background: #e8eaf6;
-    padding: 14px;
-    border-radius: 10px;
-    margin-bottom: 18px;
+    padding: 15px;
+    border-radius: 11px;
+    margin-bottom: 15px;
 }
 
 .date-row {
@@ -62,14 +63,40 @@ h1 {
 }
 
 .date-row input {
-    padding: 9px;
+    padding: 9px 10px;
     border: 1px solid #bbb;
-    border-radius: 6px;
+    border-radius: 7px;
+    background: white;
+}
+
+.date-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.date-buttons button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.previous-btn {
+    background: #757575;
+    color: white;
+}
+
+.today-btn {
+    background: #546e7a;
+    color: white;
 }
 
 .load-btn {
     width: 100%;
-    margin-top: 12px;
+    margin-top: 10px;
     padding: 13px;
     border: none;
     border-radius: 9px;
@@ -82,6 +109,32 @@ h1 {
 
 .load-btn:hover {
     background: #0d1652;
+}
+
+.report-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.report-actions button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 9px;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.share-btn {
+    background: #0088cc;
+    color: white;
+}
+
+.text-btn {
+    background: #00897b;
+    color: white;
 }
 
 .status {
@@ -107,6 +160,25 @@ h1 {
     color: #c62828;
 }
 
+.status.loading {
+    background: #fff3e0;
+    color: #e65100;
+}
+
+.summary {
+    background: #e8eaf6;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 18px;
+    text-align: center;
+    color: #333;
+    line-height: 1.7;
+}
+
+.summary strong {
+    color: #1a237e;
+}
+
 .student-card {
     background: #f8f9fa;
     border: 1px solid #ddd;
@@ -119,8 +191,8 @@ h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
     gap: 10px;
+    margin-bottom: 12px;
 }
 
 .student-name {
@@ -187,7 +259,19 @@ h1 {
 }
 
 .position {
-    margin: 4px 0;
+    margin: 5px 0;
+    line-height: 1.4;
+}
+
+.no-plan {
+    color: #999;
+}
+
+.footer-note {
+    margin-top: 20px;
+    text-align: center;
+    color: #999;
+    font-size: 12px;
 }
 
 .empty {
@@ -196,21 +280,10 @@ h1 {
     padding: 30px 10px;
 }
 
-.summary {
-    background: #e8eaf6;
-    border-radius: 10px;
-    padding: 14px;
-    margin-bottom: 18px;
-    text-align: center;
-}
+@media (max-width: 550px) {
 
-.summary strong {
-    color: #1a237e;
-}
-
-@media(max-width:500px) {
     body {
-        padding: 10px;
+        padding: 9px;
     }
 
     .container {
@@ -220,6 +293,19 @@ h1 {
     .student-header {
         flex-direction: column;
         align-items: flex-start;
+    }
+
+    .report-actions {
+        flex-direction: column;
+    }
+
+    .date-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .date-row input {
+        width: 100%;
     }
 }
 </style>
@@ -232,18 +318,33 @@ h1 {
 <h1>👨‍💼 Controller Attendance</h1>
 
 <p class="subtitle">
-View today's attendance and the current Quran plans.
+View today's attendance, previous attendance records, and current Quran plans.
 </p>
 
-<div class="top-section">
+<div class="date-panel">
 
     <div class="date-row">
-        <label for="date">📅 Date:</label>
+
+        <label for="date">📅 Attendance Date:</label>
+
         <input type="date" id="date">
+
+    </div>
+
+    <div class="date-buttons">
+
+        <button class="previous-btn" id="previousBtn">
+            ⬅️ Previous Day
+        </button>
+
+        <button class="today-btn" id="todayBtn">
+            📅 Today
+        </button>
+
     </div>
 
     <button class="load-btn" id="loadBtn">
-        📥 Load Today's Attendance
+        📥 Load Selected Date
     </button>
 
 </div>
@@ -252,12 +353,30 @@ View today's attendance and the current Quran plans.
     Select a date and load the attendance.
 </div>
 
+<div class="report-actions">
+
+    <button class="share-btn" id="shareBtn">
+        📤 Send / Share Report
+    </button>
+
+    <button class="text-btn" id="saveTextBtn">
+        💾 Save Report as Text
+    </button>
+
+</div>
+
 <div id="summary" class="summary" style="display:none;"></div>
 
 <div id="studentList">
+
     <div class="empty">
         No attendance loaded yet.
     </div>
+
+</div>
+
+<div class="footer-note">
+    Attendance is loaded from the shared Firebase database.
 </div>
 
 </div>
@@ -283,11 +402,40 @@ const STUDENTS = [
     "Hafsah"
 ];
 
+let currentRecords = {};
+let currentZikir = {};
+let currentPlans = {};
+let currentDate = "";
+
 function getTodayStr() {
 
     const d = new Date();
 
     return d.getFullYear() + "-" +
+        String(d.getMonth() + 1).padStart(2, "0") + "-" +
+        String(d.getDate()).padStart(2, "0");
+}
+
+function changeDateByDays(days) {
+
+    const input = document.getElementById("date");
+
+    if (!input.value) {
+        input.value = getTodayStr();
+    }
+
+    const parts = input.value.split("-");
+
+    const d = new Date(
+        Number(parts[0]),
+        Number(parts[1]) - 1,
+        Number(parts[2])
+    );
+
+    d.setDate(d.getDate() + days);
+
+    input.value =
+        d.getFullYear() + "-" +
         String(d.getMonth() + 1).padStart(2, "0") + "-" +
         String(d.getDate()).padStart(2, "0");
 }
@@ -299,6 +447,16 @@ function showStatus(message, type = "info") {
     el.className = "status " + type;
 
     el.textContent = message;
+}
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 function attendanceText(status) {
@@ -318,7 +476,7 @@ function attendanceText(status) {
     return '<span class="unmarked">— Not marked</span>';
 }
 
-function renderStudents(records, zikir, plans) {
+function renderStudents() {
 
     const list = document.getElementById("studentList");
 
@@ -331,36 +489,47 @@ function renderStudents(records, zikir, plans) {
 
     STUDENTS.forEach(name => {
 
-        const status = records[name];
+        const status = currentRecords[name];
 
-        if (status === "present") present++;
-        else if (status === "absent") absent++;
-        else if (status === "permission") permission++;
-        else unmarked++;
+        if (status === "present") {
+            present++;
+        } else if (status === "absent") {
+            absent++;
+        } else if (status === "permission") {
+            permission++;
+        } else {
+            unmarked++;
+        }
 
-        const plan = plans[name];
+        const plan = currentPlans[name];
 
         let planHTML = "";
 
-        if (plan && plan.currentSurah && plan.targetSurah) {
+        if (
+            plan &&
+            plan.currentSurah &&
+            plan.targetSurah
+        ) {
 
             planHTML = `
                 <div class="quran-box">
 
                     <div class="quran-title">
-                        📖 15-Day Quran Plan
+                        📖 Current 15-Day Quran Plan
                     </div>
 
                     <div class="position">
                         📍 <strong>Current:</strong>
                         ${escapeHTML(plan.currentSurah)}
-                        — Page ${escapeHTML(String(plan.currentPage))}
+                        — Page
+                        ${escapeHTML(String(plan.currentPage))}
                     </div>
 
                     <div class="position">
                         🎯 <strong>Target:</strong>
                         ${escapeHTML(plan.targetSurah)}
-                        — Page ${escapeHTML(String(plan.targetPage))}
+                        — Page
+                        ${escapeHTML(String(plan.targetPage))}
                     </div>
 
                 </div>
@@ -372,18 +541,19 @@ function renderStudents(records, zikir, plans) {
                 <div class="quran-box">
 
                     <div class="quran-title">
-                        📖 15-Day Quran Plan
+                        📖 Current 15-Day Quran Plan
                     </div>
 
-                    <span class="unmarked">
-                        — No plan saved
-                    </span>
+                    <div class="no-plan">
+                        — No Quran plan saved
+                    </div>
 
                 </div>
             `;
         }
 
-        const zikirHTML = zikir[name]
+        const zikirHTML =
+            currentZikir[name]
             ? '<span class="zikir-done">🕌 Weekly Zikir: Done</span>'
             : '<span class="zikir-not-done">🕌 Weekly Zikir: Not marked</span>';
 
@@ -408,7 +578,7 @@ function renderStudents(records, zikir, plans) {
             <div class="info-box">
 
                 <div class="info-title">
-                    Attendance
+                    📋 Attendance
                 </div>
 
                 ${attendanceText(status)}
@@ -418,7 +588,7 @@ function renderStudents(records, zikir, plans) {
             <div class="info-box">
 
                 <div class="info-title">
-                    Weekly Zikir
+                    🕌 Weekly Zikir
                 </div>
 
                 ${zikirHTML}
@@ -430,6 +600,7 @@ function renderStudents(records, zikir, plans) {
         `;
 
         list.appendChild(card);
+
     });
 
     const summary = document.getElementById("summary");
@@ -437,25 +608,36 @@ function renderStudents(records, zikir, plans) {
     summary.style.display = "block";
 
     summary.innerHTML = `
-        <strong>Today's Summary</strong><br><br>
+
+        <strong>
+            📊 Attendance Summary — ${escapeHTML(currentDate)}
+        </strong>
+
+        <br>
+
         ✅ Present: ${present}
-        &nbsp;&nbsp;
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+
         ❌ Absent: ${absent}
-        &nbsp;&nbsp;
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+
         📝 Permission: ${permission}
-        &nbsp;&nbsp;
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+
         — Unmarked: ${unmarked}
+
     `;
 }
 
-function escapeHTML(value) {
+async function loadQuranPlans() {
 
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    const snapshot =
+        await db
+        .ref("quranPlans")
+        .once("value");
+
+    currentPlans =
+        snapshot.val() || {};
 }
 
 async function loadAttendance() {
@@ -473,43 +655,63 @@ async function loadAttendance() {
         return;
     }
 
+    currentDate = dateKey;
+
     showStatus(
-        "📥 Loading attendance...",
-        "info"
+        "📥 Loading data...",
+        "loading"
     );
 
     try {
 
         const attendanceSnapshot =
-            await db.ref("attendance/" + dateKey)
+            await db
+            .ref("attendance/" + dateKey)
             .once("value");
 
         const attendanceData =
-            attendanceSnapshot.val() || {};
+            attendanceSnapshot.val();
 
-        const records =
-            attendanceData.records || {};
+        if (attendanceData) {
 
-        const zikir =
-            attendanceData.weeklyZikir || {};
+            currentRecords =
+                attendanceData.records || {};
 
-        const plansSnapshot =
-            await db.ref("quranPlans")
-            .once("value");
+            currentZikir =
+                attendanceData.weeklyZikir || {};
 
-        const plans =
-            plansSnapshot.val() || {};
+        } else {
 
-        renderStudents(
-            records,
-            zikir,
-            plans
-        );
+            currentRecords = {};
+            currentZikir = {};
+        }
 
-        showStatus(
-            "✅ Attendance loaded successfully.",
-            "success"
-        );
+        /*
+         * Quran plans are not date-specific.
+         * They remain visible every day until
+         * changed by the attendance manager.
+         */
+
+        await loadQuranPlans();
+
+        renderStudents();
+
+        if (attendanceData) {
+
+            showStatus(
+                "✅ Attendance loaded for " + dateKey,
+                "success"
+            );
+
+        } else {
+
+            showStatus(
+                "ℹ️ No attendance was saved for " +
+                dateKey +
+                ". Unmarked students are blank.",
+                "info"
+            );
+        }
 
     } catch (error) {
 
@@ -523,18 +725,241 @@ async function loadAttendance() {
     }
 }
 
+function generateReportText() {
+
+    const dateKey =
+        currentDate ||
+        document.getElementById("date").value;
+
+    let text =
+        "📋 ATTENDANCE REPORT\n";
+
+    text +=
+        "Date: " + dateKey + "\n";
+
+    text +=
+        "==============================\n\n";
+
+    STUDENTS.forEach(name => {
+
+        const status =
+            currentRecords[name];
+
+        let attendance =
+            "Not marked";
+
+        if (status === "present") {
+            attendance = "Present";
+        } else if (status === "absent") {
+            attendance = "Absent";
+        } else if (status === "permission") {
+            attendance = "Permission";
+        }
+
+        const zikir =
+            currentZikir[name]
+            ? "Done"
+            : "Not marked";
+
+        text += name + "\n";
+
+        text +=
+            "Attendance: " +
+            attendance +
+            "\n";
+
+        text +=
+            "Weekly Zikir: " +
+            zikir +
+            "\n";
+
+        const plan =
+            currentPlans[name];
+
+        if (
+            plan &&
+            plan.currentSurah &&
+            plan.targetSurah
+        ) {
+
+            text +=
+                "Quran Plan:\n";
+
+            text +=
+                "Current: " +
+                plan.currentSurah +
+                " - Page " +
+                plan.currentPage +
+                "\n";
+
+            text +=
+                "Target: " +
+                plan.targetSurah +
+                " - Page " +
+                plan.targetPage +
+                "\n";
+
+        } else {
+
+            text +=
+                "Quran Plan: No plan saved\n";
+        }
+
+        text +=
+            "\n------------------------------\n\n";
+    });
+
+    return text;
+}
+
+async function shareReport() {
+
+    const text =
+        generateReportText();
+
+    if (navigator.share) {
+
+        try {
+
+            await navigator.share({
+
+                title:
+                    "Attendance Report - " +
+                    currentDate,
+
+                text: text
+
+            });
+
+            showStatus(
+                "📤 Report shared successfully!",
+                "success"
+            );
+
+        } catch (error) {
+
+            if (error.name !== "AbortError") {
+
+                showStatus(
+                    "❌ Could not share report.",
+                    "error"
+                );
+            }
+        }
+
+    } else {
+
+        try {
+
+            await navigator.clipboard.writeText(text);
+
+            showStatus(
+                "📋 Report copied to clipboard. You can paste it into WhatsApp or another app.",
+                "success"
+            );
+
+        } catch (error) {
+
+            showStatus(
+                "⚠️ Sharing is not supported on this browser.",
+                "error"
+            );
+        }
+    }
+}
+
+function saveReportAsText() {
+
+    const text =
+        generateReportText();
+
+    const blob =
+        new Blob(
+            [text],
+            {
+                type: "text/plain;charset=utf-8"
+            }
+        );
+
+    const url =
+        URL.createObjectURL(blob);
+
+    const link =
+        document.createElement("a");
+
+    link.href = url;
+
+    link.download =
+        "Attendance-" +
+        (currentDate || "Report") +
+        ".txt";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+
+    showStatus(
+        "💾 Report saved as a text file.",
+        "success"
+    );
+}
+
+document
+.getElementById("loadBtn")
+.addEventListener(
+    "click",
+    loadAttendance
+);
+
+document
+.getElementById("previousBtn")
+.addEventListener(
+    "click",
+    () => {
+
+        changeDateByDays(-1);
+
+        loadAttendance();
+    }
+);
+
+document
+.getElementById("todayBtn")
+.addEventListener(
+    "click",
+    () => {
+
+        document.getElementById("date").value =
+            getTodayStr();
+
+        loadAttendance();
+    }
+);
+
+document
+.getElementById("shareBtn")
+.addEventListener(
+    "click",
+    shareReport
+);
+
+document
+.getElementById("saveTextBtn")
+.addEventListener(
+    "click",
+    saveReportAsText
+);
+
 document.addEventListener(
     "DOMContentLoaded",
     () => {
 
         document.getElementById("date").value =
             getTodayStr();
-
-        document.getElementById("loadBtn")
-            .addEventListener(
-                "click",
-                loadAttendance
-            );
 
     }
 );
