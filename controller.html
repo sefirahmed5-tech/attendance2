@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>👨‍💼 Controller Attendance</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f2f5;
+    padding: 20px;
+    max-width: 800px;
+    margin: auto;
+}
+
+.container {
+    background: white;
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.1);
+}
+
+h1 {
+    color: #1a237e;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.top-section {
+    background: #e8eaf6;
+    padding: 14px;
+    border-radius: 10px;
+    margin-bottom: 18px;
+}
+
+.date-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.date-row label {
+    font-weight: bold;
+    color: #1a237e;
+}
+
+.date-row input {
+    padding: 9px;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+}
+
+.load-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 13px;
+    border: none;
+    border-radius: 9px;
+    background: #1a237e;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.load-btn:hover {
+    background: #0d1652;
+}
+
+.status {
+    margin: 12px 0;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.status.info {
+    background: #e3f2fd;
+    color: #0d47a1;
+}
+
+.status.success {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status.error {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.student-card {
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+}
+
+.student-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 10px;
+}
+
+.student-name {
+    font-size: 19px;
+    font-weight: bold;
+    color: #1a237e;
+}
+
+.attendance {
+    font-weight: bold;
+}
+
+.present {
+    color: #2e7d32;
+}
+
+.absent {
+    color: #c62828;
+}
+
+.permission {
+    color: #ef6c00;
+}
+
+.unmarked {
+    color: #999;
+}
+
+.info-box {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 9px;
+    padding: 12px;
+    margin-top: 10px;
+}
+
+.info-title {
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 6px;
+}
+
+.zikir-done {
+    color: #7b1fa2;
+    font-weight: bold;
+}
+
+.zikir-not-done {
+    color: #999;
+}
+
+.quran-box {
+    background: #f5f0f8;
+    border: 1px solid #ddd;
+    border-radius: 9px;
+    padding: 12px;
+    margin-top: 10px;
+}
+
+.quran-title {
+    font-weight: bold;
+    color: #7b1fa2;
+    margin-bottom: 8px;
+}
+
+.position {
+    margin: 4px 0;
+}
+
+.empty {
+    text-align: center;
+    color: #999;
+    padding: 30px 10px;
+}
+
+.summary {
+    background: #e8eaf6;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 18px;
+    text-align: center;
+}
+
+.summary strong {
+    color: #1a237e;
+}
+
+@media(max-width:500px) {
+    body {
+        padding: 10px;
+    }
+
+    .container {
+        padding: 15px;
+    }
+
+    .student-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>👨‍💼 Controller Attendance</h1>
+
+<p class="subtitle">
+View today's attendance and the current Quran plans.
+</p>
+
+<div class="top-section">
+
+    <div class="date-row">
+        <label for="date">📅 Date:</label>
+        <input type="date" id="date">
+    </div>
+
+    <button class="load-btn" id="loadBtn">
+        📥 Load Today's Attendance
+    </button>
+
+</div>
+
+<div id="status" class="status info">
+    Select a date and load the attendance.
+</div>
+
+<div id="summary" class="summary" style="display:none;"></div>
+
+<div id="studentList">
+    <div class="empty">
+        No attendance loaded yet.
+    </div>
+</div>
+
+</div>
+
+<script>
+
+const DATABASE_URL =
+"https://attendance-e6719-default-rtdb.firebaseio.com/";
+
+const firebaseConfig = {
+    databaseURL: DATABASE_URL
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+
+const STUDENTS = [
+    "Arefat",
+    "Zahra",
+    "Suzanne",
+    "Rania",
+    "Hafsah"
+];
+
+function getTodayStr() {
+
+    const d = new Date();
+
+    return d.getFullYear() + "-" +
+        String(d.getMonth() + 1).padStart(2, "0") + "-" +
+        String(d.getDate()).padStart(2, "0");
+}
+
+function showStatus(message, type = "info") {
+
+    const el = document.getElementById("status");
+
+    el.className = "status " + type;
+
+    el.textContent = message;
+}
+
+function attendanceText(status) {
+
+    if (status === "present") {
+        return '<span class="present">✅ Present</span>';
+    }
+
+    if (status === "absent") {
+        return '<span class="absent">❌ Absent</span>';
+    }
+
+    if (status === "permission") {
+        return '<span class="permission">📝 Permission</span>';
+    }
+
+    return '<span class="unmarked">— Not marked</span>';
+}
+
+function renderStudents(records, zikir, plans) {
+
+    const list = document.getElementById("studentList");
+
+    list.innerHTML = "";
+
+    let present = 0;
+    let absent = 0;
+    let permission = 0;
+    let unmarked = 0;
+
+    STUDENTS.forEach(name => {
+
+        const status = records[name];
+
+        if (status === "present") present++;
+        else if (status === "absent") absent++;
+        else if (status === "permission") permission++;
+        else unmarked++;
+
+        const plan = plans[name];
+
+        let planHTML = "";
+
+        if (plan && plan.currentSurah && plan.targetSurah) {
+
+            planHTML = `
+                <div class="quran-box">
+
+                    <div class="quran-title">
+                        📖 15-Day Quran Plan
+                    </div>
+
+                    <div class="position">
+                        📍 <strong>Current:</strong>
+                        ${escapeHTML(plan.currentSurah)}
+                        — Page ${escapeHTML(String(plan.currentPage))}
+                    </div>
+
+                    <div class="position">
+                        🎯 <strong>Target:</strong>
+                        ${escapeHTML(plan.targetSurah)}
+                        — Page ${escapeHTML(String(plan.targetPage))}
+                    </div>
+
+                </div>
+            `;
+
+        } else {
+
+            planHTML = `
+                <div class="quran-box">
+
+                    <div class="quran-title">
+                        📖 15-Day Quran Plan
+                    </div>
+
+                    <span class="unmarked">
+                        — No plan saved
+                    </span>
+
+                </div>
+            `;
+        }
+
+        const zikirHTML = zikir[name]
+            ? '<span class="zikir-done">🕌 Weekly Zikir: Done</span>'
+            : '<span class="zikir-not-done">🕌 Weekly Zikir: Not marked</span>';
+
+        const card = document.createElement("div");
+
+        card.className = "student-card";
+
+        card.innerHTML = `
+
+            <div class="student-header">
+
+                <div class="student-name">
+                    ${escapeHTML(name)}
+                </div>
+
+                <div class="attendance">
+                    ${attendanceText(status)}
+                </div>
+
+            </div>
+
+            <div class="info-box">
+
+                <div class="info-title">
+                    Attendance
+                </div>
+
+                ${attendanceText(status)}
+
+            </div>
+
+            <div class="info-box">
+
+                <div class="info-title">
+                    Weekly Zikir
+                </div>
+
+                ${zikirHTML}
+
+            </div>
+
+            ${planHTML}
+
+        `;
+
+        list.appendChild(card);
+    });
+
+    const summary = document.getElementById("summary");
+
+    summary.style.display = "block";
+
+    summary.innerHTML = `
+        <strong>Today's Summary</strong><br><br>
+        ✅ Present: ${present}
+        &nbsp;&nbsp;
+        ❌ Absent: ${absent}
+        &nbsp;&nbsp;
+        📝 Permission: ${permission}
+        &nbsp;&nbsp;
+        — Unmarked: ${unmarked}
+    `;
+}
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+async function loadAttendance() {
+
+    const dateKey =
+        document.getElementById("date").value;
+
+    if (!dateKey) {
+
+        showStatus(
+            "⚠️ Please select a date.",
+            "error"
+        );
+
+        return;
+    }
+
+    showStatus(
+        "📥 Loading attendance...",
+        "info"
+    );
+
+    try {
+
+        const attendanceSnapshot =
+            await db.ref("attendance/" + dateKey)
+            .once("value");
+
+        const attendanceData =
+            attendanceSnapshot.val() || {};
+
+        const records =
+            attendanceData.records || {};
+
+        const zikir =
+            attendanceData.weeklyZikir || {};
+
+        const plansSnapshot =
+            await db.ref("quranPlans")
+            .once("value");
+
+        const plans =
+            plansSnapshot.val() || {};
+
+        renderStudents(
+            records,
+            zikir,
+            plans
+        );
+
+        showStatus(
+            "✅ Attendance loaded successfully.",
+            "success"
+        );
+
+    } catch (error) {
+
+        console.error(error);
+
+        showStatus(
+            "❌ Error loading data: " +
+            error.message,
+            "error"
+        );
+    }
+}
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        document.getElementById("date").value =
+            getTodayStr();
+
+        document.getElementById("loadBtn")
+            .addEventListener(
+                "click",
+                loadAttendance
+            );
+
+    }
+);
+
+</script>
+
+</body>
+</html>
