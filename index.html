@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -126,6 +127,33 @@
             background: #ff9800;
             color: white;
             border-color: #ff9800;
+        }
+
+        /* Weekly Zikir */
+        .zikir-row {
+            margin-top: 10px;
+        }
+        
+        .zikir-btn {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .zikir-btn:hover {
+            transform: scale(1.01);
+        }
+        
+        .zikir-btn.active {
+            background: #7b1fa2;
+            color: white;
+            border-color: #7b1fa2;
         }
         
         .opt-btn:not(.active) {
@@ -314,7 +342,7 @@
 
 <script>
 // ============================================
-// ✅ DATABASE URL - ALREADY REPLACED FOR YOU ✅
+// DATABASE URL
 // ============================================
 const DATABASE_URL = "https://attendance-e6719-default-rtdb.firebaseio.com/";
 // ============================================
@@ -330,6 +358,7 @@ const db = firebase.database();
 
 // STUDENT LIST
 const STUDENTS = ["Arefat", "Zahra", "Suzanne", "Rania", "Hafsah"];
+
 const STATUS_OPTIONS = [
     { key: "present", label: "✅ Present" },
     { key: "absent", label: "❌ Absent" },
@@ -337,6 +366,7 @@ const STATUS_OPTIONS = [
 ];
 
 let currentAttendance = {};
+let currentZikir = {};
 let isSaving = false;
 
 function getTodayStr() {
@@ -378,8 +408,10 @@ async function saveToFirebase(dateKey, data) {
         await db.ref("attendance/" + dateKey).set({
             date: dateKey,
             records: data,
+            weeklyZikir: currentZikir,
             timestamp: firebase.database.ServerValue.TIMESTAMP
         });
+        
         showStatus("✅ Saved to cloud! Your controller can now see it.", "success");
         await loadHistory();
         return true;
@@ -399,11 +431,15 @@ async function loadFromFirebase(dateKey) {
         const data = snapshot.val();
         
         if (data && data.records) {
-            currentAttendance = data.records || {};
+            currentAttendance = data.records;
+            currentZikir = data.weeklyZikir || {};
+            
             renderStudents();
             showStatus("✅ Loaded from cloud for " + dateKey, "success");
         } else {
             currentAttendance = {};
+            currentZikir = {};
+            
             renderStudents();
             showStatus("ℹ️ No record found for " + dateKey + ". Mark attendance and save.", "info");
         }
@@ -437,19 +473,25 @@ async function loadHistory() {
             const present = STUDENTS.filter(n => records[n] === "present").length;
             const absent = STUDENTS.filter(n => records[n] === "absent").length;
             const permission = STUDENTS.filter(n => records[n] === "permission").length;
+            const zikir = STUDENTS.filter(
+                n => record.weeklyZikir && record.weeklyZikir[n]
+            ).length;
             
             const item = document.createElement("div");
             item.className = "history-item";
             item.innerHTML = `
                 <span class="date">${dateKey}</span>
-                <span class="summary">P:${present} A:${absent} P:${permission}</span>
+                <span class="summary">P:${present} A:${absent} Pe:${permission} 📿:${zikir}</span>
             `;
+            
             item.onclick = () => {
                 document.getElementById("attDate").value = dateKey;
                 loadFromFirebase(dateKey);
             };
+            
             historyList.appendChild(item);
         });
+        
     } catch (e) {
         historyList.innerHTML = '<div class="empty-msg">Error loading history</div>';
         console.error("History error:", e);
@@ -468,31 +510,60 @@ function renderStudents() {
         nameDiv.className = "student-name";
         nameDiv.textContent = name;
         
+        // Present / Absent / Permission
         const optionsDiv = document.createElement("div");
         optionsDiv.className = "options";
         
         STATUS_OPTIONS.forEach(opt => {
             const btn = document.createElement("div");
             btn.className = "opt-btn " + opt.key;
+            
             if (currentAttendance[name] === opt.key) {
                 btn.classList.add("active");
             }
+            
             btn.textContent = opt.label;
+            
             btn.onclick = () => {
                 currentAttendance[name] = opt.key;
                 renderStudents();
             };
+            
             optionsDiv.appendChild(btn);
         });
         
+        // Weekly Zikir - separate and optional
+        const zikirRow = document.createElement("div");
+        zikirRow.className = "zikir-row";
+        
+        const zikirBtn = document.createElement("div");
+        zikirBtn.className = "zikir-btn";
+        
+        if (currentZikir[name]) {
+            zikirBtn.classList.add("active");
+            zikirBtn.textContent = "📿 Weekly Zikir: Recited ✓";
+        } else {
+            zikirBtn.textContent = "📿 Weekly Zikir";
+        }
+        
+        zikirBtn.onclick = () => {
+            currentZikir[name] = !currentZikir[name];
+            renderStudents();
+        };
+        
+        zikirRow.appendChild(zikirBtn);
+        
         card.appendChild(nameDiv);
         card.appendChild(optionsDiv);
+        card.appendChild(zikirRow);
+        
         list.appendChild(card);
     });
 }
 
 function getAttendanceText() {
     const dateKey = document.getElementById("attDate").value;
+    
     const statusLabels = {
         present: "Present ✅",
         absent: "Absent ❌",
@@ -505,13 +576,23 @@ function getAttendanceText() {
     
     STUDENTS.forEach(name => {
         const status = currentAttendance[name] || "Not marked";
-        text += name + ": " + (statusLabels[status] || "Not marked") + "\n";
+        const zikirText = currentZikir[name] ? " | 📿 Recited" : "";
+        
+        text += name + ": " +
+            (statusLabels[status] || "Not marked") +
+            zikirText + "\n";
     });
     
     text += "\n" + "=".repeat(30);
-    text += "\n✅ Present: " + STUDENTS.filter(n => currentAttendance[n] === "present").length;
-    text += "\n❌ Absent: " + STUDENTS.filter(n => currentAttendance[n] === "absent").length;
-    text += "\n📝 Permission: " + STUDENTS.filter(n => currentAttendance[n] === "permission").length;
+    text += "\n✅ Present: " +
+        STUDENTS.filter(n => currentAttendance[n] === "present").length;
+    text += "\n❌ Absent: " +
+        STUDENTS.filter(n => currentAttendance[n] === "absent").length;
+    text += "\n📝 Permission: " +
+        STUDENTS.filter(n => currentAttendance[n] === "permission").length;
+    text += "\n📿 Weekly Zikir Recited: " +
+        STUDENTS.filter(n => currentZikir[n]).length;
+    
     text += "\n\n📌 This attendance is saved online.";
     
     return text;
@@ -519,6 +600,7 @@ function getAttendanceText() {
 
 async function shareAttendance() {
     const unmarked = STUDENTS.filter(name => !currentAttendance[name]);
+    
     if (unmarked.length > 0) {
         showStatus("⚠️ Please mark: " + unmarked.join(", "), "error");
         return;
@@ -538,7 +620,10 @@ async function shareAttendance() {
         await navigator.clipboard.writeText(text);
         showStatus("📋 Copied! Paste into Telegram chat.", "success");
     } catch (e) {
-        showStatus("📝 Copy this text:\n" + text.substring(0, 100) + "...", "info");
+        showStatus(
+            "📝 Copy this text:\n" + text.substring(0, 100) + "...",
+            "info"
+        );
     }
 }
 
@@ -582,3 +667,4 @@ setInterval(checkConnection, 30000);
 
 </body>
 </html>
+```
