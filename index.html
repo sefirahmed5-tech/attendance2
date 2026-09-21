@@ -115,6 +115,15 @@ h1 { color: #1a237e; font-size: 24px; margin-bottom: 5px; }
     display: none;
 }
 .plan-error.show { display: block; }
+.plan-locked {
+    background: #fff3e0;
+    color: #e65100;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-top: 10px;
+    border: 1px solid #ffcc80;
+}
 .student-actions { display: flex; gap: 8px; margin-top: 10px; }
 .save-student-btn {
     flex: 1;
@@ -136,10 +145,12 @@ h1 { color: #1a237e; font-size: 24px; margin-bottom: 5px; }
 .safinah-plan-title { font-weight: bold; color: #e65100; margin-bottom: 10px; }
 .safinah-row { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 .safinah-row select {
-[9/21/2026 7:16 PM] ẞëfír Dälâß: width: 100%;
+    width: 100%;
     padding: 9px;
     border: 1px solid #ccc;
     border-radius: 6px;
+    font-family: 'Traditional Arabic', 'Amiri', 'Scheherazade', serif;
+    font-size: 15px;
 }
 .safinah-check {
     display: flex;
@@ -265,7 +276,8 @@ h1 { color: #1a237e; font-size: 24px; margin-bottom: 5px; }
     </div>
 
     <div id="statusMsg" class="status-msg"></div>
-[9/21/2026 7:16 PM] ẞëfír Dälâß: <div class="history-section" id="historySection">
+
+    <div class="history-section" id="historySection">
         <h3>📚 All Saved Attendance Records</h3>
         <div id="historyList">
             <div class="empty-msg">Loading...</div>
@@ -298,66 +310,68 @@ const SURAHS = ["1. Al-Fatihah","2. Al-Baqarah","3. Ali 'Imran","4. An-Nisa","5.
 const PAGES = Array.from({ length: 604 }, (_, i) => i + 1);
 
 const SAFINAH_FASL = [
-    "1. Rukun Islam",
-    "2. Rukun Iman",
-    "3. Makna Kalimat Tauhid",
-    "4. Tanda-Tanda Baligh",
-    "5. Bersuci dengan Batu",
-    "6. Fardhu dan Rukun Wudhu",
-    "7. Pengertian Niat dan Tertib",
-    "8. Hukum Air",
-    "9. Perkara yang Mewajibkan Mandi",
-    "10. Fardhu dan Rukun Mandi Junub",
-    "11. Syarat-Syarat Wudhu",
-    "12. Perkara yang Membatalkan Wudhu",
-    "13. Larangan bagi Orang yang Batal Wudhu",
-    "14. Larangan bagi Orang Junub",
-    "15. Larangan bagi Wanita Haid",
-    "16. Sebab-Sebab Tayammum",
-    "17. Syarat Tayammum",
-    "18. Rukun Tayammum",
-    "19. Pembatal Tayammum",
-    "20. Benda Najis yang Bisa Suci",
-    "21. Macam-Macam Najis",
-    "22. Cara Membasuh Najis",
-    "23. Masa Haid",
-    "24. Masa Nifas",
-    "25. Hadas",
-    "26. Aurat",
-    "27. Rukun dan Fardhu Shalat",
-    "28. Tingkatan Niat",
-    "29. Syarat Takbiratul Ihram",
-    "30. Syarat Membaca Al-Fatihah",
-    "31. Tasydid Al-Fatihah",
-    "32. Tempat Sunnah Mengangkat Kedua Tangan",
-    "33. Syarat Sujud",
-    "34. Anggota Sujud",
-    "35. Tasydid Tahiyat (Tasyahud)",
-    "36. Tasydid Shalawat",
-    "37. Paling Sedikitnya Salam",
-    "38. Waktu-Waktu Shalat Fardhu",
-    "39. Waktu Haram Mengerjakan Shalat",
-    "40. Diam yang Disunahkan (Saktah)",
-    "41. Rukun yang Wajib Tuma'ninah",
-    "42. Sebab Sujud Sahwi",
-    "43. Sunnah Ab'ad dalam Shalat",
-    "44. Pembatal Shalat",
-    "45. Kapan Niat Imam Wajib",
-    "46. Syarat Menjadi Makmum",
-    "47. Syarat Sah Shalat Berjamaah",
-    "48. Syarat Jama' Taqdim",
-    "49. Syarat Jama' Ta'khir",
-    "50. Syarat Shalat Qashar",
-    "51. Syarat Shalat Jum'at",
-    "52. Rukun Khutbah Jum'at",
-    "53. Cara Mengurus Jenazah",
-    "54. Cara Memandikan Jenazah",
-    "55. Mengkafani Jenazah",
-    "56. Rukun Shalat Jenazah",
-    "57. Liang Kubur",
-    "58. Hukum Minta Bantuan dalam Bersuci",
-    "59. Zakat"
+    "1. أركان الإسلام",
+    "2. أركان الإيمان",
+    "3. معنى كلمة التوحيد",
+    "4. علامات البلوغ",
+    "5. الاستنجاء بالحجر",
+    "6. فروض الوضوء",
+    "7. معنى النية والترتيب",
+    "8. أحكام الماء",
+    "9. موجبات الغسل",
+    "10. فروض الغسل",
+    "11. شروط الوضوء",
+    "12. نواقض الوضوء",
+    "13. ما يحرم على المحدث",
+    "14. ما يحرم على الجنب",
+    "15. ما يحرم على الحائض",
+    "16. أسباب التيمم",
+    "17. شروط التيمم",
+    "18. فروض التيمم",
+    "19. نواقض التيمم",
+    "20. ما يطهر من النجاسات",
+    "21. أقسام النجاسات",
+    "22. كيفية تطهير النجاسة",
+    "23. الحيض",
+    "24. النفاس",
+    "25. الحدث",
+    "26. العورة",
+    "27. فروض الصلاة",
+    "28. مراتب النية",
+    "29. شروط تكبيرة الإحرام",
+    "30. شروط قراءة الفاتحة",
+    "31. تشديدات الفاتحة",
+    "32. مواضع رفع اليدين",
+    "33. شروط السجود",
+    "34. أعضاء السجود",
+    "35. تشديدات التشهد",
+    "36. تشديدات الصلاة على النبي",
+    "37. أقل السلام",
+    "38. أوقات الصلاة",
+    "39. أوقات النهي",
+    "40. سكتات الصلاة",
+    "41. فروض الطمأنينة",
+    "42. أسباب سجود السهو",
+    "43. سنن الأبعاض",
+    "44. مبطلات الصلاة",
+    "45. نية الإمامة",
+    "46. شروط الاقتداء",
+    "47. أحكام الجماعة",
+    "48. شروط جمع التقديم",
+    "49. شروط جمع التأخير",
+    "50. شروط القصر",
+    "51. شروط صلاة الجمعة",
+    "52. أركان الخطبتين",
+    "53. أحكام الجنازة",
+    "54. غسل الميت",
+    "55. تكفين الميت",
+    "56. أركان صلاة الجنازة",
+    "57. الدفن",
+    "58. الاستعانة في الوضوء",
+    "59. الزكاة"
 ];
+
+const LOCK_DAYS = 15;
 
 let currentAttendance = {};
 let currentZikir = {};
@@ -392,6 +406,38 @@ function setBusy(button, busy, busyText, normalText) {
     button.textContent = busy ? busyText : normalText;
 }
 
+function isPlanLocked(plan) {
+    if (!plan || !plan.savedAt) return false;
+    const saved = new Date(plan.savedAt);
+    if (isNaN(saved.getTime())) return false;
+    const now = new Date();
+    const diffMs = now - saved;
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    return diffDays < LOCK_DAYS;
+}
+
+function lockRemainingDays(plan) {
+    if (!plan || !plan.savedAt) return 0;
+    const saved = new Date(plan.savedAt);
+    if (isNaN(saved.getTime())) return 0;
+    const now = new Date();
+    const diffMs = now - saved;
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    const left = Math.ceil(LOCK_DAYS - diffDays);
+    return left > 0 ? left : 0;
+}
+
+function lockUntilDate(plan) {
+    if (!plan || !plan.savedAt) return "";
+    const saved = new Date(plan.savedAt);
+    if (isNaN(saved.getTime())) return "";
+    const unlock = new Date(saved.getTime() + LOCK_DAYS * 24 * 60 * 60 * 1000);
+    const y = unlock.getFullYear();
+    const m = String(unlock.getMonth() + 1).padStart(2, "0");
+    const d = String(unlock.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+}
+
 db.ref(".info/connected").on("value", snapshot => {
     const online = snapshot.val() === true;
     const el = document.getElementById("syncStatus");
@@ -414,7 +460,7 @@ function buildPageOptions(selected) {
 }
 
 function buildSafinahOptions(selected) {
-    return `<option value="">Select Fasl</option>` +
+    return `<option value="">اختر الفصل</option>` +
         SAFINAH_FASL.map(f =>
             `<option value="${f}" ${f === selected ? "selected" : ""}>${f}</option>`
         ).join("");
@@ -493,6 +539,17 @@ async function saveStudentQuranPlan(name) {
     const stateKey = "plan-" + name;
     if (savingState[stateKey]) return;
 
+    const existing = currentQuranPlans[name];
+    if (isPlanLocked(existing)) {
+        const left = lockRemainingDays(existing);
+        const until = lockUntilDate(existing);
+        showStatus(
+            `🔒 ${name}'s plan is locked for ${left} more day(s). Unlocks on ${until}.`,
+            "error"
+        );
+        return;
+    }
+
     const plan = readPlan(name);
     const error = document.getElementById("planError-" + name);
 
@@ -522,10 +579,14 @@ async function saveStudentQuranPlan(name) {
     setBusy(button, true, "Saving...", "📖 Save Plan");
 
     try {
+        plan.savedAt = new Date().toISOString();
         plan.updatedAt = firebase.database.ServerValue.TIMESTAMP;
         await db.ref("quranPlans/" + name).set(plan);
         currentQuranPlans[name] = plan;
-        showStatus(`📖 ${name}'s Quran plan saved!`, "success");
+        showStatus(
+            `📖 ${name}'s Quran plan saved and locked for ${LOCK_DAYS} days!`,
+            "success"
+        );
         renderStudents();
     } catch (error) {
         showStatus("❌ Error saving plan: " + error.message, "error");
@@ -628,13 +689,20 @@ async function saveAllQuranPlans() {
         const updates = {};
         let saved = 0;
         const skipped = [];
+        const locked = [];
 
         STUDENTS.forEach(name => {
+            const existing = currentQuranPlans[name];
+            if (isPlanLocked(existing)) {
+                locked.push(name);
+                return;
+            }
             const plan = readPlan(name);
             if (!plan || plan.invalid) {
                 skipped.push(name);
                 return;
             }
+            plan.savedAt = new Date().toISOString();
             plan.updatedAt = firebase.database.ServerValue.TIMESTAMP;
             updates["quranPlans/" + name] = plan;
             saved++;
@@ -644,15 +712,10 @@ async function saveAllQuranPlans() {
         await loadQuranPlans();
         renderStudents();
 
-        if (saved === 0) {
-            showStatus("⚠️ No valid Quran plans to save", "error");
-        } else {
-            showStatus(
-                `✅ Saved ${saved} Quran plan(s)` +
-                (skipped.length ? ". Skipped: " + skipped.join(", ") : "!"),
-                "success"
-            );
-        }
+        let msg = `✅ Saved ${saved} Quran plan(s)`;
+        if (locked.length) msg += `. Locked: ${locked.join(", ")}`;
+        if (skipped.length) msg += `. Skipped: ${skipped.join(", ")}`;
+        showStatus(msg, saved > 0 ? "success" : "error");
     } catch (error) {
         showStatus("❌ Error saving plans: " + error.message, "error");
     } finally {
@@ -737,11 +800,12 @@ function renderStudents() {
         const safinah = currentSafinah[name] || {};
         const hasAttendance = currentAttendance[name] !== undefined;
         const hasPlan = !!(plan.currentSurah && plan.targetSurah);
+        const locked = isPlanLocked(plan);
 
         let badgeText = "Not saved";
         let badgeClass = "";
         if (hasAttendance && hasPlan) {
-            badgeText = "✅ Complete";
+            badgeText = locked ? "🔒 Locked" : "✅ Complete";
             badgeClass = "saved";
         } else if (hasAttendance || hasPlan) {
             badgeText = "⏳ Partial";
@@ -751,12 +815,24 @@ function renderStudents() {
         const card = document.createElement("div");
         card.className = "student-card";
 
+        let lockedHTML = "";
+        if (locked) {
+            const left = lockRemainingDays(plan);
+            const until = lockUntilDate(plan);
+            lockedHTML = `
+                <div class="plan-locked">
+                    🔒 This plan is locked for ${left} more day(s).<br>
+                    Unlocks on <b>${until}</b>.
+                </div>
+            `;
+        }
+
         let safinahHTML = "";
         if (name === "Arefat") {
             safinahHTML = `
                 <div class="safinah-plan">
-                    <div class="safinah-plan-title">📚 Safinah Shafi'i Kitab Plan</div>
-                    <span class="plan-label">📍 Fasl</span>
+                    <div class="safinah-plan-title">📚 خطة كتاب سفينة النجاة</div>
+                    <span class="plan-label">📍 الفصل</span>
                     <div class="safinah-row">
                         <select id="safinahFasl-Arefat">
                             ${buildSafinahOptions(safinah.fasl)}
@@ -764,17 +840,19 @@ function renderStudents() {
                     </div>
                     <label class="safinah-check">
                         <input type="checkbox" id="safinahDone-Arefat" ${safinah.done ? "checked" : ""}>
-                        Mark this Fasl as done
+                        تم إنجاز هذا الفصل
                     </label>
                     <div class="plan-error" id="safinahError-Arefat"></div>
                     <div class="student-actions">
                         <button class="save-student-btn safinah" id="saveSafinahBtn-Arefat">
-                            📚 Save Safinah Plan
+                            📚 حفظ خطة السفينة
                         </button>
                     </div>
                 </div>
             `;
         }
+
+        const disabledAttr = locked ? "disabled" : "";
 
         card.innerHTML = `
             <div class="student-name">
@@ -804,17 +882,23 @@ function renderStudents() {
                 <div class="quran-plan-title">📖 15-Day Quran Plan</div>
                 <span class="plan-label">📍 Current Position</span>
                 <div class="plan-row">
-                    <select id="currentSurah-${name}">${buildSurahOptions(plan.currentSurah)}</select>
-                    <select id="currentPage-${name}">${buildPageOptions(plan.currentPage)}</select>
+                    <select id="currentSurah-${name}" ${disabledAttr}>${buildSurahOptions(plan.currentSurah)}</select>
+                    <select id="currentPage-${name}" ${disabledAttr}>${buildPageOptions(plan.currentPage)}</select>
                 </div>
                 <span class="plan-label">🎯 Target Position</span>
                 <div class="plan-row">
-                    <select id="targetSurah-${name}">${buildSurahOptions(plan.targetSurah)}</select>
-                    <select id="targetPage-${name}">${buildPageOptions(plan.targetPage)}</select>
+                    <select id="targetSurah-${name}" ${disabledAttr}>${buildSurahOptions(plan.targetSurah)}</select>
+                    <select id="targetPage-${name}" ${disabledAttr}>${buildPageOptions(plan.targetPage)}</select>
                 </div>
                 <div class="plan-error" id="planError-${name}"></div>
+                ${lockedHTML}
                 <div class="student-actions">
-                    <button class="save-student-btn plan" id="savePlanBtn-${name}" data-name="${name}">
+                    <button
+                        class="save-student-btn plan"
+                        id="savePlanBtn-${name}"
+                        data-name="${name}"
+                        ${disabledAttr}
+                    >
                         📖 Save Plan
                     </button>
                 </div>
@@ -864,7 +948,10 @@ function generateReport(dateKey) {
         const plan = currentQuranPlans[name] || {};
         text += `${name}: ${currentAttendance[name] || "Not marked"} | Weekly Zikir: ${currentZikir[name] ? "Done" : "Not done"}\n`;
         if (plan.currentSurah) {
-            text += `   📖 Quran: ${plan.currentSurah}, page ${plan.currentPage} → ${plan.targetSurah}, page ${plan.targetPage}\n`;
+            const lockInfo = isPlanLocked(plan)
+                ? ` [locked until ${lockUntilDate(plan)}]`
+                : "";
+            text += `   📖 Quran: ${plan.currentSurah}, page ${plan.currentPage} → ${plan.targetSurah}, page ${plan.targetPage}${lockInfo}\n`;
         }
         if (name === "Arefat") {
             const safinah = currentSafinah.Arefat || {};
