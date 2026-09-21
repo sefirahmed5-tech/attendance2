@@ -1,49 +1,372 @@
-<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>📋 Online Attendance System</title> <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script> <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script> <style> * { margin: 0; padding: 0; box-sizing: border-box; } body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; max-width: 700px; margin: 0 auto; } .container { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); } h1 { color: #1a237e; font-size: 24px; margin-bottom: 5px; } .subtitle { color: #666; font-size: 14px; margin-bottom: 20px; } .date-section { background: #e8eaf6; padding: 12px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; } .date-section label { font-weight: bold; color: #1a237e; } .date-section input { padding: 7px 10px; border: 1px solid #ccc; border-radius: 5px; } .student-card { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 10px; padding: 15px; margin-bottom: 15px; position: relative; } .student-name { font-weight: bold; font-size: 17px; color: #1a237e; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; } .student-status-badge { font-size: 12px; padding: 3px 10px; border-radius: 12px; background: #e0e0e0; color: #666; } .student-status-badge.saved { background: #4caf50; color: white; } .student-status-badge.partial { background: #ff9800; color: white; } .options { display: flex; gap: 8px; } .opt-btn { flex: 1; padding: 10px 5px; border: 2px solid #ddd; border-radius: 8px; background: white; cursor: pointer; font-size: 13px; transition: all 0.3s; } .opt-btn.present.active { background: #4caf50; color: white; border-color: #4caf50; } .opt-btn.absent.active { background: #f44336; color: white; border-color: #f44336; } .opt-btn.permission.active { background: #ff9800; color: white; border-color: #ff9800; } .zikir-row { margin-top: 10px; } .zikir-btn { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; background: white; cursor: pointer; font-size: 14px; transition: all 0.3s; } .zikir-btn.active { background: #7b1fa2; color: white; border-color: #7b1fa2; } .quran-plan { margin-top: 15px; padding: 12px; background: white; border: 1px solid #ddd; border-radius: 8px; } .quran-plan-title { font-weight: bold; color: #1a237e; margin-bottom: 10px; } .plan-label { display: block; font-weight: bold; font-size: 13px; color: #555; margin: 10px 0 5px; } .plan-row { display: flex; gap: 8px; } .plan-row select { flex: 1; padding: 9px; border: 1px solid #ccc; border-radius: 6px; min-width: 0; } .student-actions { display: flex; gap: 8px; margin-top: 10px; } .save-student-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.3s; } .save-student-btn.attendance { background: #1a237e; color: white; } .save-student-btn.attendance:hover { background: #0d1652; } .save-student-btn.plan { background: #00897b; color: white; } .save-student-btn.plan:hover { background: #00695c; } .save-student-btn:disabled { opacity: 0.5; cursor: not-allowed; } .actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; } .actions-row { display: flex; gap: 10px; } .actions-row .btn { flex: 1; } .btn { padding: 14px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s; } .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); } .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; } .btn-save-all { background: #1a237e; color: white; } .btn-load { background: #6c63ff; color: white; } .btn-share { background: #0088cc; color: white; } .btn-save-plans { background: #00897b; color: white; } .status-msg { margin-top: 12px; padding: 10px; border-radius: 8px; text-align: center; min-height: 40px; font-size: 14px; } .status-msg.success { background: #e8f5e9; color: #2e7d32; } .status-msg.error { background: #ffebee; color: #c62828; } .status-msg.info { background: #e3f2fd; color: #0d47a1; } .status-msg.loading { background: #fff3e0; color: #e65100; } .kitab-plan { margin-top: 15px; padding: 12px; background: #fff8e1; border: 1px solid #e0c97f; border-radius: 8px; } .kitab-plan-title { font-weight: bold; color: #795548; margin-bottom: 10px; } .save-student-btn.kitab { background: #795548; color: white; } .save-student-btn.kitab:hover { background: #5d4037; } .history-section { margin-top: 30px; border-top: 2px solid #e0e0e0; padding-top: 20px; } .history-section h3 { color: #1a237e; margin-bottom: 15px; } .history-item { background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; cursor: pointer; } .history-item .date { font-weight: bold; color: #1a237e; } .history-item .summary { color: #666; font-size: 13px; } .empty-msg { color: #999; text-align: center; padding: 20px; } .sync-status { font-size: 12px; } .sync-status.online { color: #4caf50; } .sync-status.offline { color: #f44336; } @media (max-width: 500px) { .plan-row { flex-direction: column; } .opt-btn { font-size: 11px; } .student-actions { flex-direction: column; } .actions-row { flex-direction: column; } } </style> </head> <body> <div class="container"> <h1>📋 Attendance Register</h1> <p class="subtitle">✅ Save each student individually - No need to wait!</p> <div class="date-section"> <label for="attDate">📅 Date:</label> <input type="date" id="attDate"> <span id="syncStatus" class="sync-status">🔄 Connecting...</span> </div> <div id="studentList"></div> <div class="actions"> <div class="actions-row"> <button class="btn btn-save-all" id="saveAllBtn">💾 Save All Attendance</button> <button class="btn btn-save-plans" id="saveAllPlansBtn">📖 Save All Plans</button> </div> <div class="actions-row"> <button class="btn btn-load" id="loadBtn">📥 Load Today's Data</button> <button class="btn btn-share" id="shareBtn">📤 Send Report</button> </div> </div> <div id="statusMsg" class="status-msg"></div> <div class="history-section"> <h3>📚 All Saved Attendance Records</h3> <div id="historyList"> <div class="empty-msg">Loading...</div> </div> </div> </div> <script> const DATABASE_URL = "https://attendance-e6719-default-rtdb.firebaseio.com/"; const firebaseConfig = { databaseURL: DATABASE_URL }; firebase.initializeApp(firebaseConfig); const db = firebase.database(); const STUDENTS = ["Arefat", "Zahra", "Suzanne", "Rania", "Hafsah"]; const STATUS_OPTIONS = [ { key: "present", label: "✅ Present" }, { key: "absent", label: "❌ Absent" }, { key: "permission", label: "📝 Permission" } ]; const SURAHS = [ "1. Al-Fatihah", "2. Al-Baqarah", "3. Ali 'Imran", "4. An-Nisa", "5. Al-Ma'idah", "6. Al-An'am", "7. Al-A'raf", "8. Al-Anfal", "9. At-Tawbah", "10. Yunus", "11. Hud", "12. Yusuf", "13. Ar-Ra'd", "14. Ibrahim", "15. Al-Hijr", "16. An-Nahl", "17. Al-Isra", "18. Al-Kahf", "19. Maryam", "20. Ta-Ha", "21. Al-Anbiya", "22. Al-Hajj", "23. Al-Mu'minun", "24. An-Nur", "25. Al-Furqan", "26. Ash-Shu'ara", "27. An-Naml", "28. Al-Qasas", "29. Al-'Ankabut", "30. Ar-Rum", "31. Luqman", "32. As-Sajdah", "33. Al-Ahzab", "34. Saba", "35. Fatir", "36. Ya-Sin", "37. As-Saffat", "38. Sad", "39. Az-Zumar", "40. Ghafir", "41. Fussilat", "42. Ash-Shura", "43. Az-Zukhruf", "44. Ad-Dukhan", "45. Al-Jathiyah", "46. Al-Ahqaf", "47. Muhammad", "48. Al-Fath", "49. Al-Hujurat", "50. Qaf", "51. Adh-Dhariyat", "52. At-Tur", "53. An-Najm", "54. Al-Qamar", "55. Ar-Rahman", "56. Al-Waqi'ah", "57. Al-Hadid", "58. Al-Mujadilah", "59. Al-Hashr", "60. Al-Mumtahanah", "61. As-Saff", "62. Al-Jumu'ah", "63. Al-Munafiqun", "64. At-Taghabun", "65. At-Talaq", "66. At-Tahrim", "67. Al-Mulk", "68. Al-Qalam", "69. Al-Haqqah", "70. Al-Ma'arij", "71. Nuh", "72. Al-Jinn", "73. Al-Muzzammil", "74. Al-Muddaththir", "75. Al-Qiyamah", "76. Al-Insan", "77. Al-Mursalat", "78. An-Naba", "79. An-Nazi'at", "80. 'Abasa", "81. At-Takwir", "82. Al-Infitar", "83. Al-Mutaffifin", "84. Al-Inshiqaq", "85. Al-Buruj", "86. At-Tariq", "87. Al-A'la", "88. Al-Ghashiyah", "89. Al-Fajr", "90. Al-Balad", "91. Ash-Shams", "92. Al-Layl", "93. Ad-Duha", "94. Ash-Sharh", "95. At-Tin", "96. Al-'Alaq", "97. Al-Qadr", "98. Al-Bayyinah", "99. Az-Zalzalah", "100. Al-'Adiyat", "101. Al-Qari'ah", "102. At-Takathur", "103. Al-'Asr", "104. Al-Humazah", "105. Al-Fil", "106. Quraysh", "107. Al-Ma'un", "108. Al-Kawthar", "109. Al-Kafirun", "110. An-Nasr", "111. Al-Masad", "112. Al-Ikhlas", "113. Al-Falaq", "114. An-Nas" ]; const PAGES = Array.from({ length: 48 }, (_, i) => i + 1); let currentAttendance = {}; let currentZikir = {}; let currentQuranPlans = {}; let currentKitabPlans = {}; const KITAB_FASLS = [ "1. أركان الإسلام خمسة", "2. أركان الإيمان ستة", "3. معنى لا إله إلا الله", "4. علامات البلوغ ثلاث", "5. شروط إجزاء الحجر ثمانية", "6. فروض الوضوء ستة", "7. النية", "8. الماء قليل وكثير", "9. موجبات الغسل ستة", "10. فروض الغسل اثنان", "11. شروط الوضوء عشرة", "12. نواقض الوضوء أربعة أشياء", "13. من انتقض وضوؤه حرم عليه أربعة أشياء", "14. أسباب التيمم ثلاثة", "15. شروط التيمم عشرة", "16. فروض التيمم خمسة", "17. مبطلات التيمم أربعة", "18. الذي يظهر من النجاسة ثلاثة", "19. النجاسة ثلاثة", "20. المغلظة", "21. أقل الحيض والنفاس", "22. أعذار الصلاة اثنان",    "23. شروط الصلاة ثمانية",
-    "24. أركان الصلاة سبعة عشر",
-    "25. النية ثلاث درجات",
-    "26. شروط تكبيرة الإحرام ستة عشرة",
-    "27. شروط الفاتحة عشرة",
-    "28. تشديدات الفاتحة أربع عشرة",
-    "29. يسن رفع اليدين في أربعة مواضع",
-    "30. شروط السجود سبعة",
-    "31. تشديدات التشهد إحدى وعشرون",
-    "32. تشديدات أقل الصلاة على النبي أربع",
-    "33. أقل السلام",
-    "34. أوقات الصلاة خمس",
-    "35. تحرم الصلاة التي ليس لها سبب متقدم ولا مقارن في خمسة أوقات",
-    "36. سكتات الصلاة ستة",
-    "37. الأركان التي تلزمه فيها الطمأنينة أربعة",
-    "38. أسباب سجود السهو أربعة",
-    "39. أبعاض الصلاة سبعة",
-    "40. تبطل الصلاة بأربع عشرة خصلة",
-    "41. الذي يلزم فيه نية الإمامة أربع",
-    "42. شروط القدوة أحد عشر",
-    "43. صور القدوة تسع",
-    "44. شروط جمع التقديم أربعة",
-    "45. شروط جمع التأخير إثنان",
-    "46. شروط القصر سبعة",
-    "47. شروط الجمعة ستة",
-    "48. أركان الخطبتين خمسة",
-    "49. شروط الخطبتين عشرة",
-    "50. الذي يلزم للميت أربع خصال",
-    "51. أقل الغسل",
-    "52. أقل الكفن",
-    "53. أركان صلاة الجنازة سبعة",
-    "54. أقل الدفن",
-    "55. ينبش الميت لأربع خصال",
-    "56. الاستعانات أربع خصال",
-    "57. الأموال التي تلزم فيها الزكاة ستة أنواع",
-    "58. يجب صوم رمضان بأحد أمور خمسة",
-    "59. شروط صحته أربعة أشياء",
-    "60. شروط وجوبه خمسة أشياء",
-    "61. أركانه ثلاثة أشياء",
-    "62. يجب مع القضاء للصوم الكفارة العظمى",
-    "63. يبطل الصوم",
-    "64. الإفطار في رمضان أربعة أنواع",
-    "65. الذي لا يفطر مما يصل إلى الجوف سبعة أفراد"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📋 Online Attendance System</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f2f5;
+    padding: 20px;
+    max-width: 760px;
+    margin: auto;
+}
+.container {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.1);
+}
+h1 { color: #1a237e; font-size: 24px; margin-bottom: 5px; }
+.subtitle { color: #666; font-size: 14px; margin-bottom: 20px; }
+.date-section {
+    background: #e8eaf6;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.date-section label { font-weight: bold; color: #1a237e; }
+.date-section input { padding: 7px 10px; border: 1px solid #ccc; border-radius: 5px; }
+.student-card {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+.student-name {
+    font-weight: bold;
+    font-size: 17px;
+    color: #1a237e;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.student-status-badge {
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: #e0e0e0;
+    color: #666;
+}
+.student-status-badge.saved { background: #4caf50; color: white; }
+.student-status-badge.partial { background: #ff9800; color: white; }
+.options { display: flex; gap: 8px; }
+.opt-btn {
+    flex: 1;
+    padding: 10px 5px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    font-size: 13px;
+}
+.opt-btn.present.active { background: #4caf50; color: white; border-color: #4caf50; }
+.opt-btn.absent.active { background: #f44336; color: white; border-color: #f44336; }
+.opt-btn.permission.active { background: #ff9800; color: white; border-color: #ff9800; }
+.zikir-row { margin-top: 10px; }
+.zikir-btn {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+.zikir-btn.active { background: #7b1fa2; color: white; border-color: #7b1fa2; }
+.quran-plan {
+    margin-top: 15px;
+    padding: 12px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+.quran-plan-title { font-weight: bold; color: #1a237e; margin-bottom: 10px; }
+.plan-label {
+    display: block;
+    font-weight: bold;
+    font-size: 13px;
+    color: #555;
+    margin: 10px 0 5px;
+}
+.plan-row { display: flex; gap: 8px; }
+.plan-row select {
+    flex: 1;
+    padding: 9px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    min-width: 0;
+}
+.plan-error {
+    color: #c62828;
+    font-size: 12px;
+    margin-top: 6px;
+    display: none;
+}
+.plan-error.show { display: block; }
+.student-actions { display: flex; gap: 8px; margin-top: 10px; }
+.save-student-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.save-student-btn.attendance { background: #1a237e; color: white; }
+.save-student-btn.plan { background: #00897b; color: white; }
+.safinah-plan {
+    margin-top: 15px;
+    padding: 12px;
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 8px;
+}
+.safinah-plan-title { font-weight: bold; color: #e65100; margin-bottom: 10px; }
+.safinah-row { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.safinah-row select {
+[9/21/2026 7:16 PM] ẞëfír Dälâß: width: 100%;
+    padding: 9px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+.safinah-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 14px;
+    color: #555;
+}
+.safinah-check input { width: 18px; height: 18px; }
+.save-student-btn.safinah { background: #ef6c00; color: white; }
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+.actions-row { display: flex; gap: 10px; }
+.actions-row .btn { flex: 1; }
+.btn {
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.btn:disabled, .save-student-btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-save-all { background: #1a237e; color: white; }
+.btn-load { background: #6c63ff; color: white; }
+.btn-share { background: #0088cc; color: white; }
+.btn-save-plans { background: #00897b; color: white; }
+.btn-controller { background: #ef6c00; color: white; }
+.status-msg {
+    margin-top: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    min-height: 40px;
+    font-size: 14px;
+}
+.status-msg.success { background: #e8f5e9; color: #2e7d32; }
+.status-msg.error { background: #ffebee; color: #c62828; }
+.status-msg.info { background: #e3f2fd; color: #0d47a1; }
+.status-msg.loading { background: #fff3e0; color: #e65100; }
+.history-section {
+    margin-top: 30px;
+    border-top: 2px solid #e0e0e0;
+    padding-top: 20px;
+}
+.history-section h3 { color: #1a237e; margin-bottom: 15px; }
+.history-item {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+}
+.history-item .date { font-weight: bold; color: #1a237e; }
+.history-item .summary { color: #666; font-size: 13px; }
+.empty-msg { color: #999; text-align: center; padding: 20px; }
+.sync-status { font-size: 12px; }
+.sync-status.online { color: #4caf50; }
+.sync-status.offline { color: #f44336; }
+.controller-card {
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 12px;
+}
+.controller-date {
+    font-weight: bold;
+    color: #e65100;
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+.controller-meta { font-size: 12px; color: #777; margin-bottom: 10px; }
+.report-line { padding: 7px 0; border-bottom: 1px solid #eee; line-height: 1.4; }
+.delete-report {
+    margin-top: 12px;
+    width: 100%;
+    padding: 8px;
+    border: none;
+    border-radius: 7px;
+    background: #f44336;
+    color: white;
+    cursor: pointer;
+}
+@media(max-width:500px) {
+    .plan-row, .student-actions, .actions-row { flex-direction: column; }
+    .opt-btn { font-size: 11px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h1 id="pageTitle">📋 Attendance Register</h1>
+    <p class="subtitle" id="pageSubtitle">✅ Save each student individually — safe for multiple devices</p>
+
+    <div class="date-section">
+        <label for="attDate">📅 Date:</label>
+        <input type="date" id="attDate">
+        <span id="syncStatus" class="sync-status">🔄 Connecting...</span>
+    </div>
+
+    <div id="studentList"></div>
+
+    <div class="actions" id="mainActions">
+        <div class="actions-row">
+            <button class="btn btn-save-all" id="saveAllBtn">💾 Save All Attendance</button>
+            <button class="btn btn-save-plans" id="saveAllPlansBtn">📖 Save All Plans</button>
+        </div>
+        <div class="actions-row">
+            <button class="btn btn-load" id="loadBtn">📥 Load Today's Data</button>
+            <button class="btn btn-share" id="shareBtn">📤 Send Report</button>
+        </div>
+        <div class="actions-row">
+            <button class="btn btn-controller" id="sendControllerBtn">📨 Send to Controller</button>
+        </div>
+    </div>
+
+    <div id="statusMsg" class="status-msg"></div>
+[9/21/2026 7:16 PM] ẞëfír Dälâß: <div class="history-section" id="historySection">
+        <h3>📚 All Saved Attendance Records</h3>
+        <div id="historyList">
+            <div class="empty-msg">Loading...</div>
+        </div>
+    </div>
+
+    <div id="controllerSection" style="display:none">
+        <div class="history-section">
+            <h3>📨 Reports Sent to Controller</h3>
+            <div id="controllerList">
+                <div class="empty-msg">Loading...</div>
+            </div>
+        </div>
+    </div>
+</div><script>
+const DATABASE_URL = "https://attendance-e6719-default-rtdb.firebaseio.com/";
+firebase.initializeApp({ databaseURL: DATABASE_URL });
+const db = firebase.database();
+
+const STUDENTS = ["Arefat", "Zahra", "Suzanne", "Rania", "Hafsah"];
+
+const STATUS_OPTIONS = [
+    { key: "present", label: "✅ Present" },
+    { key: "absent", label: "❌ Absent" },
+    { key: "permission", label: "📝 Permission" }
 ];
 
-const savingState = {};
+const SURAHS = ["1. Al-Fatihah","2. Al-Baqarah","3. Ali 'Imran","4. An-Nisa","5. Al-Ma'idah","6. Al-An'am","7. Al-A'raf","8. Al-Anfal","9. At-Tawbah","10. Yunus","11. Hud","12. Yusuf","13. Ar-Ra'd","14. Ibrahim","15. Al-Hijr","16. An-Nahl","17. Al-Isra","18. Al-Kahf","19. Maryam","20. Ta-Ha","21. Al-Anbiya","22. Al-Hajj","23. Al-Mu'minun","24. An-Nur","25. Al-Furqan","26. Ash-Shu'ara","27. An-Naml","28. Al-Qasas","29. Al-'Ankabut","30. Ar-Rum","31. Luqman","32. As-Sajdah","33. Al-Ahzab","34. Saba","35. Fatir","36. Ya-Sin","37. As-Saffat","38. Sad","39. Az-Zumar","40. Ghafir","41. Fussilat","42. Ash-Shura","43. Az-Zukhruf","44. Ad-Dukhan","45. Al-Jathiyah","46. Al-Ahqaf","47. Muhammad","48. Al-Fath","49. Al-Hujurat","50. Qaf","51. Adh-Dhariyat","52. At-Tur","53. An-Najm","54. Al-Qamar","55. Ar-Rahman","56. Al-Waqi'ah","57. Al-Hadid","58. Al-Mujadilah","59. Al-Hashr","60. Al-Mumtahanah","61. As-Saff","62. Al-Jumu'ah","63. Al-Munafiqun","64. At-Taghabun","65. At-Talaq","66. At-Tahrim","67. Al-Mulk","68. Al-Qalam","69. Al-Haqqah","70. Al-Ma'arij","71. Nuh","72. Al-Jinn","73. Al-Muzzammil","74. Al-Muddaththir","75. Al-Qiyamah","76. Al-Insan","77. Al-Mursalat","78. An-Naba","79. An-Nazi'at","80. 'Abasa","81. At-Takwir","82. Al-Infitar","83. Al-Mutaffifin","84. Al-Inshiqaq","85. Al-Buruj","86. At-Tariq","87. Al-A'la","88. Al-Ghashiyah","89. Al-Fajr","90. Al-Balad","91. Ash-Shams","92. Al-Layl","93. Ad-Duha","94. Ash-Sharh","95. At-Tin","96. Al-'Alaq","97. Al-Qadr","98. Al-Bayyinah","99. Az-Zalzalah","100. Al-'Adiyat","101. Al-Qari'ah","102. At-Takathur","103. Al-'Asr","104. Al-Humazah","105. Al-Fil","106. Quraysh","107. Al-Ma'un","108. Al-Kawthar","109. Al-Kafirun","110. An-Nasr","111. Al-Masad","112. Al-Ikhlas","113. Al-Falaq","114. An-Nas"];
+
+const PAGES = Array.from({ length: 604 }, (_, i) => i + 1);
+
+const SAFINAH_FASL = [
+    "1. Rukun Islam",
+    "2. Rukun Iman",
+    "3. Makna Kalimat Tauhid",
+    "4. Tanda-Tanda Baligh",
+    "5. Bersuci dengan Batu",
+    "6. Fardhu dan Rukun Wudhu",
+    "7. Pengertian Niat dan Tertib",
+    "8. Hukum Air",
+    "9. Perkara yang Mewajibkan Mandi",
+    "10. Fardhu dan Rukun Mandi Junub",
+    "11. Syarat-Syarat Wudhu",
+    "12. Perkara yang Membatalkan Wudhu",
+    "13. Larangan bagi Orang yang Batal Wudhu",
+    "14. Larangan bagi Orang Junub",
+    "15. Larangan bagi Wanita Haid",
+    "16. Sebab-Sebab Tayammum",
+    "17. Syarat Tayammum",
+    "18. Rukun Tayammum",
+    "19. Pembatal Tayammum",
+    "20. Benda Najis yang Bisa Suci",
+    "21. Macam-Macam Najis",
+    "22. Cara Membasuh Najis",
+    "23. Masa Haid",
+    "24. Masa Nifas",
+    "25. Hadas",
+    "26. Aurat",
+    "27. Rukun dan Fardhu Shalat",
+    "28. Tingkatan Niat",
+    "29. Syarat Takbiratul Ihram",
+    "30. Syarat Membaca Al-Fatihah",
+    "31. Tasydid Al-Fatihah",
+    "32. Tempat Sunnah Mengangkat Kedua Tangan",
+    "33. Syarat Sujud",
+    "34. Anggota Sujud",
+    "35. Tasydid Tahiyat (Tasyahud)",
+    "36. Tasydid Shalawat",
+    "37. Paling Sedikitnya Salam",
+    "38. Waktu-Waktu Shalat Fardhu",
+    "39. Waktu Haram Mengerjakan Shalat",
+    "40. Diam yang Disunahkan (Saktah)",
+    "41. Rukun yang Wajib Tuma'ninah",
+    "42. Sebab Sujud Sahwi",
+    "43. Sunnah Ab'ad dalam Shalat",
+    "44. Pembatal Shalat",
+    "45. Kapan Niat Imam Wajib",
+    "46. Syarat Menjadi Makmum",
+    "47. Syarat Sah Shalat Berjamaah",
+    "48. Syarat Jama' Taqdim",
+    "49. Syarat Jama' Ta'khir",
+    "50. Syarat Shalat Qashar",
+    "51. Syarat Shalat Jum'at",
+    "52. Rukun Khutbah Jum'at",
+    "53. Cara Mengurus Jenazah",
+    "54. Cara Memandikan Jenazah",
+    "55. Mengkafani Jenazah",
+    "56. Rukun Shalat Jenazah",
+    "57. Liang Kubur",
+    "58. Hukum Minta Bantuan dalam Bersuci",
+    "59. Zakat"
+];
+
+let currentAttendance = {};
+let currentZikir = {};
+let currentQuranPlans = {};
+let currentSafinah = {};
+let savingState = {};
+
+const isController =
+    new URLSearchParams(location.search).get("controller") === "1";
 
 function getTodayStr() {
     const d = new Date();
@@ -52,1014 +375,671 @@ function getTodayStr() {
         String(d.getDate()).padStart(2, "0");
 }
 
-function showStatus(message, type = "info") {
-    const msg = document.getElementById("statusMsg");
-    msg.className = "status-msg " + type;
-    msg.textContent = message;
+function surahIndex(value) {
+    const n = parseInt(value, 10);
+    return isNaN(n) ? null : n;
 }
 
-function updateSyncStatus(online) {
+function showStatus(message, type = "info") {
+    const box = document.getElementById("statusMsg");
+    box.className = "status-msg " + type;
+    box.textContent = message;
+}
+
+function setBusy(button, busy, busyText, normalText) {
+    if (!button) return;
+    button.disabled = busy;
+    button.textContent = busy ? busyText : normalText;
+}
+
+db.ref(".info/connected").on("value", snapshot => {
+    const online = snapshot.val() === true;
     const el = document.getElementById("syncStatus");
     el.className = "sync-status " + (online ? "online" : "offline");
     el.textContent = online ? "✅ Online" : "❌ Offline";
+});
+
+function buildSurahOptions(selected) {
+    return `<option value="">Select Surah</option>` +
+        SURAHS.map(s =>
+            `<option value="${s}" ${s === selected ? "selected" : ""}>${s}</option>`
+        ).join("");
 }
 
-async function checkConnection() {
-    try {
-        await db.ref(".info/connected").once("value");
-        updateSyncStatus(true);
-        return true;
-    } catch (e) {
-        updateSyncStatus(false);
-        return false;
-    }
+function buildPageOptions(selected) {
+    return `<option value="">Select Page</option>` +
+        PAGES.map(p =>
+            `<option value="${p}" ${Number(selected) === p ? "selected" : ""}>Page ${p}</option>`
+        ).join("");
 }
 
-function setButtonBusy(btn, busy, busyLabel, normalLabel) {
-    if (!btn) return;
-    btn.disabled = busy;
-    btn.textContent = busy ? busyLabel : normalLabel;
+function buildSafinahOptions(selected) {
+    return `<option value="">Select Fasl</option>` +
+        SAFINAH_FASL.map(f =>
+            `<option value="${f}" ${f === selected ? "selected" : ""}>${f}</option>`
+        ).join("");
 }
 
 async function saveStudentAttendance(name, dateKey) {
-    const stateKey = "att-" + name;
+    const stateKey = "attendance-" + name;
     if (savingState[stateKey]) return;
-
     savingState[stateKey] = true;
 
-    const btn = document.getElementById("saveAttBtn-" + name);
-    setButtonBusy(btn, true, "Saving...", "💾 Save Attendance");
+    const button = document.getElementById("saveAttBtn-" + name);
+    setBusy(button, true, "Saving...", "💾 Save Attendance");
 
     try {
         if (currentAttendance[name] === undefined) {
             showStatus(`⚠️ Please select a status for ${name} first`, "error");
             return;
         }
-
-        const snapshot = await db.ref("attendance/" + dateKey).once("value");
-        const existingData = snapshot.val() || {};
-
-        const updatedRecords = existingData.records || {};
-        updatedRecords[name] = currentAttendance[name];
-
-        const updatedZikir = existingData.weeklyZikir || {};
-        updatedZikir[name] = currentZikir[name] || false;
-
-        await db.ref("attendance/" + dateKey).set({
-            date: dateKey,
-            records: updatedRecords,
-            weeklyZikir: updatedZikir,
-            timestamp: firebase.database.ServerValue.TIMESTAMP
+        const ref = db.ref("attendance/" + dateKey);
+        await ref.transaction(oldData => {
+            oldData = oldData || {};
+            oldData.records = oldData.records || {};
+            oldData.weeklyZikir = oldData.weeklyZikir || {};
+            oldData.records[name] = currentAttendance[name];
+            oldData.weeklyZikir[name] = !!currentZikir[name];
+            oldData.date = dateKey;
+            oldData.updatedAt = firebase.database.ServerValue.TIMESTAMP;
+            return oldData;
         });
-
         showStatus(`✅ ${name}'s attendance saved!`, "success");
-        renderStudents();
+        await loadFromFirebase(dateKey);
         await loadHistory();
-
-    } catch (e) {
-        showStatus(`❌ Error saving ${name}: ${e.message}`, "error");
+    } catch (error) {
+        showStatus("❌ Error saving: " + error.message, "error");
     } finally {
         savingState[stateKey] = false;
-        setButtonBusy(btn, false, "Saving...", "💾 Save Attendance");
+        setBusy(button, false, "Saving...", "💾 Save Attendance");
     }
+}
+
+function readPlan(name) {
+    const currentSurah = document.getElementById("currentSurah-" + name);
+    const currentPage = document.getElementById("currentPage-" + name);
+    const targetSurah = document.getElementById("targetSurah-" + name);
+    const targetPage = document.getElementById("targetPage-" + name);
+
+    if (!currentSurah || !currentPage || !targetSurah || !targetPage ||
+        !currentSurah.value || !currentPage.value ||
+        !targetSurah.value || !targetPage.value) {
+        return null;
+    }
+
+    const currentSurahNum = surahIndex(currentSurah.value);
+    const targetSurahNum = surahIndex(targetSurah.value);
+    const currentPageNum = Number(currentPage.value);
+    const targetPageNum = Number(targetPage.value);
+
+    if (!Number.isFinite(currentPageNum) || !Number.isFinite(targetPageNum) ||
+        currentSurahNum === null || targetSurahNum === null) {
+        return null;
+    }
+
+    if (targetSurahNum === currentSurahNum && targetPageNum === currentPageNum) {
+        return { invalid: true };
+    }
+
+    return {
+        currentSurah: currentSurah.value,
+        currentPage: currentPageNum,
+        targetSurah: targetSurah.value,
+        targetPage: targetPageNum
+    };
 }
 
 async function saveStudentQuranPlan(name) {
     const stateKey = "plan-" + name;
     if (savingState[stateKey]) return;
 
-    const currentSurah = document.getElementById("currentSurah-" + name);
-    const currentPage = document.getElementById("currentPage-" + name);
-    const targetSurah = document.getElementById("targetSurah-" + name);
-    const targetPage = document.getElementById("targetPage-" + name);
+    const plan = readPlan(name);
+    const error = document.getElementById("planError-" + name);
 
-    if (!currentSurah || !currentPage || !targetSurah || !targetPage) {
-        showStatus(`⚠️ Please complete all fields for ${name}`, "error");
+    if (!plan) {
+        if (error) {
+            error.textContent = "⚠️ Please complete all four fields.";
+            error.classList.add("show");
+        }
+        showStatus(`⚠️ Please complete ${name}'s Quran plan`, "error");
         return;
     }
-
-    if (!currentSurah.value || !targetSurah.value ||
-        !currentPage.value || !targetPage.value) {
-        showStatus(`⚠️ Please select Surah and Page for ${name}`, "error");
+    if (plan.invalid) {
+        if (error) {
+            error.textContent = "⚠️ Target cannot be the exact same position as current.";
+            error.classList.add("show");
+        }
+        showStatus(`⚠️ ${name}'s target is the same as current position`, "error");
         return;
     }
-
-    const curPageNum = Number(currentPage.value);
-    const tgtPageNum = Number(targetPage.value);
+    if (error) {
+        error.classList.remove("show");
+        error.textContent = "";
+    }
 
     savingState[stateKey] = true;
-
-    const btn = document.getElementById("savePlanBtn-" + name);
-    setButtonBusy(btn, true, "Saving...", "📖 Save Plan");
-
-    const plan = {
-        currentSurah: currentSurah.value,
-        currentPage: curPageNum,
-        targetSurah: targetSurah.value,
-        targetPage: tgtPageNum,
-        updatedAt: firebase.database.ServerValue.TIMESTAMP
-    };
+    const button = document.getElementById("savePlanBtn-" + name);
+    setBusy(button, true, "Saving...", "📖 Save Plan");
 
     try {
+        plan.updatedAt = firebase.database.ServerValue.TIMESTAMP;
         await db.ref("quranPlans/" + name).set(plan);
-
         currentQuranPlans[name] = plan;
-
         showStatus(`📖 ${name}'s Quran plan saved!`, "success");
-
         renderStudents();
-
-    } catch (e) {
-        showStatus(`❌ Error saving ${name}'s plan: ${e.message}`, "error");
+    } catch (error) {
+        showStatus("❌ Error saving plan: " + error.message, "error");
     } finally {
         savingState[stateKey] = false;
-        setButtonBusy(btn, false, "Saving...", "📖 Save Plan");
+        setBusy(button, false, "Saving...", "📖 Save Plan");
+    }
+}
+
+async function saveSafinahPlan() {
+    const stateKey = "safinah-Arefat";
+    if (savingState[stateKey]) return;
+
+    const select = document.getElementById("safinahFasl-Arefat");
+    const checkbox = document.getElementById("safinahDone-Arefat");
+    const error = document.getElementById("safinahError-Arefat");
+
+    if (!select || !select.value) {
+        if (error) {
+            error.textContent = "⚠️ Please select a Fasl first.";
+            error.classList.add("show");
+        }
+        showStatus("⚠️ Please select Arefat's Safinah Fasl", "error");
+        return;
+    }
+    if (error) {
+        error.classList.remove("show");
+        error.textContent = "";
+    }
+
+    savingState[stateKey] = true;
+    const button = document.getElementById("saveSafinahBtn-Arefat");
+    setBusy(button, true, "Saving...", "📚 Save Safinah Plan");
+
+    try {
+        const plan = {
+            fasl: select.value,
+            done: !!(checkbox && checkbox.checked),
+            updatedAt: firebase.database.ServerValue.TIMESTAMP
+        };
+        await db.ref("safinahPlan/Arefat").set(plan);
+        currentSafinah.Arefat = plan;
+        showStatus("📚 Arefat's Safinah plan saved!", "success");
+        renderStudents();
+    } catch (error) {
+        showStatus("❌ Error saving Safinah plan: " + error.message, "error");
+    } finally {
+        savingState[stateKey] = false;
+        setBusy(button, false, "Saving...", "📚 Save Safinah Plan");
     }
 }
 
 async function saveAllAttendance(dateKey) {
-    const stateKey = "att-all";
+    if (savingState["all-attendance"]) return;
+    savingState["all-attendance"] = true;
 
-    if (savingState[stateKey]) return;
+    const button = document.getElementById("saveAllBtn");
+    setBusy(button, true, "Saving...", "💾 Save All Attendance");
 
-    savingState[stateKey] = true;
-
-    const btn = document.getElementById("saveAllBtn");
-    setButtonBusy(btn, true, "Saving...", "💾 Save All Attendance");
-
-    const missing = STUDENTS.filter(
-        name => currentAttendance[name] === undefined
-    );
-
+    const missing = STUDENTS.filter(name => currentAttendance[name] === undefined);
     if (missing.length > 0) {
-        showStatus(
-            `⚠️ Missing status for: ${missing.join(", ")}`,
-            "error"
-        );
-
-        savingState[stateKey] = false;
-
-        setButtonBusy(
-            btn,
-            false,
-            "Saving...",
-            "💾 Save All Attendance"
-        );
-
-        return false;
+        showStatus("⚠️ Missing status for: " + missing.join(", "), "error");
+        savingState["all-attendance"] = false;
+        setBusy(button, false, "Saving...", "💾 Save All Attendance");
+        return;
     }
 
     try {
-        await db.ref("attendance/" + dateKey).set({
-            date: dateKey,
-            records: currentAttendance,
-            weeklyZikir: currentZikir,
-            timestamp: firebase.database.ServerValue.TIMESTAMP
+        await db.ref("attendance/" + dateKey).transaction(oldData => {
+            oldData = oldData || {};
+            oldData.date = dateKey;
+            oldData.records = oldData.records || {};
+            oldData.weeklyZikir = oldData.weeklyZikir || {};
+            STUDENTS.forEach(name => {
+                oldData.records[name] = currentAttendance[name];
+                oldData.weeklyZikir[name] = !!currentZikir[name];
+            });
+            oldData.updatedAt = firebase.database.ServerValue.TIMESTAMP;
+            return oldData;
         });
-
         showStatus("✅ All attendance saved!", "success");
-
-        renderStudents();
-
+        await loadFromFirebase(dateKey);
         await loadHistory();
-
-        return true;
-
-    } catch (e) {
-        showStatus("❌ Error saving: " + e.message, "error");
-
-        return false;
-
+    } catch (error) {
+        showStatus("❌ Error saving: " + error.message, "error");
     } finally {
-        savingState[stateKey] = false;
-
-        setButtonBusy(
-            btn,
-            false,
-            "Saving...",
-            "💾 Save All Attendance"
-        );
+        savingState["all-attendance"] = false;
+        setBusy(button, false, "Saving...", "💾 Save All Attendance");
     }
 }
 
 async function saveAllQuranPlans() {
-    const stateKey = "plan-all";
+    if (savingState["all-plans"]) return;
+    savingState["all-plans"] = true;
 
-    if (savingState[stateKey]) return;
-
-    savingState[stateKey] = true;
-
-    const btn = document.getElementById("saveAllPlansBtn");
-
-    setButtonBusy(
-        btn,
-        true,
-        "Saving...",
-        "📖 Save All Plans"
-    );
-
-    showStatus("💾 Saving all Quran plans...", "loading");
+    const button = document.getElementById("saveAllPlansBtn");
+    setBusy(button, true, "Saving...", "📖 Save All Plans");
 
     try {
-        let savedCount = 0;
+        const updates = {};
+        let saved = 0;
         const skipped = [];
 
-        for (const name of STUDENTS) {
-
-            const currentSurah =
-                document.getElementById("currentSurah-" + name);
-
-            const currentPage =
-                document.getElementById("currentPage-" + name);
-
-            const targetSurah =
-                document.getElementById("targetSurah-" + name);
-
-            const targetPage =
-                document.getElementById("targetPage-" + name);
-
-            if (
-                !currentSurah ||
-                !currentSurah.value ||
-                !targetSurah ||
-                !targetSurah.value ||
-                !currentPage ||
-                !currentPage.value ||
-                !targetPage ||
-                !targetPage.value
-            ) {
+        STUDENTS.forEach(name => {
+            const plan = readPlan(name);
+            if (!plan || plan.invalid) {
                 skipped.push(name);
-                continue;
+                return;
             }
+            plan.updatedAt = firebase.database.ServerValue.TIMESTAMP;
+            updates["quranPlans/" + name] = plan;
+            saved++;
+        });
 
-            await db.ref("quranPlans/" + name).set({
-                currentSurah: currentSurah.value,
-                currentPage: Number(currentPage.value),
-                targetSurah: targetSurah.value,
-                targetPage: Number(targetPage.value),
-                updatedAt: firebase.database.ServerValue.TIMESTAMP
-            });
+        if (saved > 0) await db.ref().update(updates);
+        await loadQuranPlans();
+        renderStudents();
 
-            savedCount++;
-        }
-
-        if (savedCount === 0) {
-
-            showStatus(
-                "⚠️ No complete Quran plans to save",
-                "error"
-            );
-
-        } else if (skipped.length > 0) {
-
-            showStatus(
-                `✅ Saved ${savedCount} plans. Skipped incomplete: ${skipped.join(", ")}`,
-                "info"
-            );
-
+        if (saved === 0) {
+            showStatus("⚠️ No valid Quran plans to save", "error");
         } else {
-
             showStatus(
-                `✅ Saved ${savedCount} Quran plans!`,
+                `✅ Saved ${saved} Quran plan(s)` +
+                (skipped.length ? ". Skipped: " + skipped.join(", ") : "!"),
                 "success"
             );
         }
-
-        await loadQuranPlans();
-
-        renderStudents();
-
-    } catch (e) {
-
-        showStatus(
-            "❌ Error saving plans: " + e.message,
-            "error"
-        );
-
+    } catch (error) {
+        showStatus("❌ Error saving plans: " + error.message, "error");
     } finally {
-
-        savingState[stateKey] = false;
-
-        setButtonBusy(
-            btn,
-            false,
-            "Saving...",
-            "📖 Save All Plans"
-        );
+        savingState["all-plans"] = false;
+        setBusy(button, false, "Saving...", "📖 Save All Plans");
     }
+}
+
+async function loadQuranPlans() {
+    const snapshot = await db.ref("quranPlans").once("value");
+    currentQuranPlans = snapshot.val() || {};
+}
+
+async function loadSafinahPlans() {
+    const snapshot = await db.ref("safinahPlan").once("value");
+    currentSafinah = snapshot.val() || {};
 }
 
 async function loadFromFirebase(dateKey) {
     showStatus("📥 Loading data...", "loading");
-
     try {
-        const snapshot =
-            await db.ref("attendance/" + dateKey).once("value");
-
+        const snapshot = await db.ref("attendance/" + dateKey).once("value");
         const data = snapshot.val();
-
-        if (data && data.records) {
-            currentAttendance = data.records;
+        if (data) {
+            currentAttendance = data.records || {};
             currentZikir = data.weeklyZikir || {};
         } else {
             currentAttendance = {};
             currentZikir = {};
         }
-
         await loadQuranPlans();
-        await loadKitabPlans();
-
+        await loadSafinahPlans();
         renderStudents();
-
-        showStatus(
-            `✅ Loaded data for ${dateKey}`,
-            "success"
-        );
-
-        return true;
-
-    } catch (e) {
-
-        showStatus(
-            "❌ Error loading: " + e.message,
-            "error"
-        );
-
-        return false;
-    }
-}
-
-async function loadQuranPlans() {
-    try {
-        const snapshot =
-            await db.ref("quranPlans").once("value");
-
-        currentQuranPlans =
-            snapshot.val() || {};
-
-    } catch (e) {
-        console.error(e);
+        showStatus(`✅ Loaded data for ${dateKey}`, "success");
+    } catch (error) {
+        showStatus("❌ Error loading: " + error.message, "error");
     }
 }
 
 async function loadHistory() {
-    const historyList =
-        document.getElementById("historyList");
-
+    const list = document.getElementById("historyList");
     try {
-        const snapshot =
-            await db.ref("attendance").once("value");
-
-        const allData =
-            snapshot.val();
-
+        const snapshot = await db.ref("attendance").once("value");
+        const allData = snapshot.val();
         if (!allData) {
-            historyList.innerHTML =
-                '<div class="empty-msg">No records yet</div>';
-
+            list.innerHTML = '<div class="empty-msg">No records yet</div>';
             return;
         }
-
-        const dates =
-            Object.keys(allData)
-            .sort((a, b) => b.localeCompare(a));
-
-        historyList.innerHTML = "";
-
+        list.innerHTML = "";
+        const dates = Object.keys(allData).sort((a, b) => b.localeCompare(a));
         dates.forEach(dateKey => {
-
-            const entry =
-                allData[dateKey];
-
-            const records =
-                entry.records || {};
-
-            const presentCount =
-                Object.values(records)
-                .filter(s => s === "present")
-                .length;
-
-            const total =
-                Object.keys(records)
-                .length;
-
-            const item =
-                document.createElement("div");
-
-            item.className =
-                "history-item";
-
+            const records = allData[dateKey].records || {};
+            const present = Object.values(records).filter(s => s === "present").length;
+            const total = Object.keys(records).length;
+            const item = document.createElement("div");
+            item.className = "history-item";
             item.innerHTML = `
                 <span class="date">${dateKey}</span>
-                <span class="summary">
-                    ${presentCount}/${total} present
-                </span>
+                <span class="summary">${present}/${total} present</span>
             `;
-
-            item.addEventListener(
-                "click",
-                () => {
-
-                    document
-                        .getElementById("attDate")
-                        .value = dateKey;
-
-                    loadFromFirebase(dateKey);
-                }
-            );
-
-            historyList.appendChild(item);
+            item.onclick = () => {
+                document.getElementById("attDate").value = dateKey;
+                loadFromFirebase(dateKey);
+            };
+            list.appendChild(item);
         });
-
-    } catch (e) {
-
-        historyList.innerHTML =
-            `<div class="empty-msg">
-                Error loading history: ${e.message}
-            </div>`;
-    }
-}
-
-function buildSurahOptions(selectedValue) {
-
-    let html =
-        '<option value="">Select Surah</option>';
-
-    SURAHS.forEach(s => {
-
-        const sel =
-            s === selectedValue
-            ? "selected"
-            : "";
-
-        html +=
-            `<option value="${s}" ${sel}>
-                ${s}
-            </option>`;
-    });
-
-    return html;
-}
-
-function buildPageOptions(selectedValue) {
-
-    let html =
-        '<option value="">Select Page</option>';
-
-    PAGES.forEach(p => {
-
-        const sel =
-            Number(selectedValue) === p
-            ? "selected"
-            : "";
-
-        html +=
-            `<option value="${p}" ${sel}>
-                Page ${p}
-            </option>`;
-    });
-
-    return html;
-}
-
-
-function buildFaslOptions(selectedValue) {
-    let html = '<option value="">Select Fasl</option>';
-
-    KITAB_FASLS.forEach(fasl => {
-        const selected = fasl === selectedValue ? "selected" : "";
-        html += `<option value="${fasl}" ${selected}>${fasl}</option>`;
-    return html;
-}
-
-async function loadKitabPlans() {
-    try {
-        const snapshot = await db.ref("kitabPlans").once("value");
-        currentKitabPlans = snapshot.val() || {};
-    } catch (e) {
-        console.error(e);
-        currentKitabPlans = {};
-    }
-}
-
-async function saveArefatKitabPlan() {
-    const initialFasl = document.getElementById("kitabInitialFasl");
-    const finalFasl = document.getElementById("kitabFinalFasl");
-    const btn = document.getElementById("saveKitabPlanBtn");
-
-    if (!initialFasl || !finalFasl) return;
-
-    if (!initialFasl.value || !finalFasl.value) {
-        showStatus("⚠️ Please select both Initial Fasl and Final Fasl", "error");
-        return;
-    }
-
-    const initialIndex = KITAB_FASLS.indexOf(initialFasl.value);
-    const finalIndex = KITAB_FASLS.indexOf(finalFasl.value);
-
-    if (finalIndex < initialIndex) {
-        showStatus("⚠️ Final Fasl cannot come before Initial Fasl", "error");
-        return;
-    }
-
-    if (savingState["kitab-Arefat"]) return;
-    savingState["kitab-Arefat"] = true;
-
-    setButtonBusy(btn, true, "Saving...", "📚 Save Kitab Plan");
-
-    try {
-        const plan = {
-            book: "Safinat an-Naja",
-            initialFasl: initialFasl.value,
-            finalFasl: finalFasl.value,
-            initialFaslNumber: initialIndex + 1,
-            finalFaslNumber: finalIndex + 1,
-            updatedAt: firebase.database.ServerValue.TIMESTAMP
-        };
-
-        await db.ref("kitabPlans/Arefat").set(plan);
-        currentKitabPlans.Arefat = plan;
-
-        showStatus("📚 Arefat's Kitab plan saved!", "success");
-        renderStudents();
-    } catch (e) {
-        showStatus("❌ Error saving Kitab plan: " + e.message, "error");
-    } finally {
-        savingState["kitab-Arefat"] = false;
-        setButtonBusy(btn, false, "Saving...", "📚 Save Kitab Plan");
+    } catch (error) {
+        list.innerHTML = `<div class="empty-msg">Error: ${error.message}</div>`;
     }
 }
 
 function renderStudents() {
-
-    const list =
-        document.getElementById("studentList");
-
+    const list = document.getElementById("studentList");
+    if (isController) {
+        list.innerHTML = "";
+        return;
+    }
     list.innerHTML = "";
 
     STUDENTS.forEach(name => {
+        const plan = currentQuranPlans[name] || {};
+        const safinah = currentSafinah[name] || {};
+        const hasAttendance = currentAttendance[name] !== undefined;
+        const hasPlan = !!(plan.currentSurah && plan.targetSurah);
 
-        const plan =
-            currentQuranPlans[name] || {};
-
-        const kitabPlan =
-            currentKitabPlans.Arefat || {};
-
-        const hasAttendance =
-            currentAttendance[name] !== undefined;
-
-        const hasPlan =
-            plan.currentSurah &&
-            plan.currentPage &&
-            plan.targetSurah &&
-            plan.targetPage;
-
-        let badgeText =
-            "Not saved";
-
-        let badgeClass =
-            "";
-
+        let badgeText = "Not saved";
+        let badgeClass = "";
         if (hasAttendance && hasPlan) {
-
-            badgeText =
-                "✅ Complete";
-
-            badgeClass =
-                "saved";
-
-        } else if (
-            hasAttendance ||
-            hasPlan
-        ) {
-
-            badgeText =
-                "⏳ Partial";
-
-            badgeClass =
-                "partial";
+            badgeText = "✅ Complete";
+            badgeClass = "saved";
+        } else if (hasAttendance || hasPlan) {
+            badgeText = "⏳ Partial";
+            badgeClass = "partial";
         }
 
-        const card =
-            document.createElement("div");
+        const card = document.createElement("div");
+        card.className = "student-card";
 
-        card.className =
-            "student-card";
-
-        card.innerHTML = `
-
-            <div class="student-name">
-
-                <span>${name}</span>
-
-                <span class="student-status-badge ${badgeClass}">
-                    ${badgeText}
-                </span>
-
-            </div>
-
-            <div class="options">
-
-                ${STATUS_OPTIONS.map(opt => `
-
-                    <button
-                        class="opt-btn ${opt.key}
-                        ${currentAttendance[name] === opt.key ? "active" : ""}"
-
-                        data-name="${name}"
-                        data-status="${opt.key}"
-                    >
-                        ${opt.label}
-                    </button>
-
-                `).join("")}
-
-            </div>
-
-            <div class="zikir-row">
-
-                <button
-                    class="zikir-btn
-                    ${currentZikir[name] ? "active" : ""}"
-
-                    data-name="${name}"
-                >
-
-                    ${currentZikir[name]
-                        ? "🕌 Weekly Zikir: Done"
-                        : "🕌 Mark Weekly Zikir"
-                    }
-
-                </button>
-
-            </div>
-
-            <div class="student-actions">
-
-                <button
-                    class="save-student-btn attendance"
-                    id="saveAttBtn-${name}"
-                    data-name="${name}"
-                >
-                    💾 Save Attendance
-                </button>
-
-            </div>
-
-            <div class="quran-plan">
-
-                <div class="quran-plan-title">
-                    📖 15-Day Quran Plan
-                </div>
-
-                <span class="plan-label">
-                    📍 Current Position
-                </span>
-
-                <div class="plan-row">
-
-                    <select id="currentSurah-${name}">
-                        ${buildSurahOptions(plan.currentSurah)}
-                    </select>
-
-                    <select id="currentPage-${name}">
-                        ${buildPageOptions(plan.currentPage)}
-                    </select>
-
-                </div>
-
-                <span class="plan-label">
-                    🎯 Target Position
-                </span>
-
-                <div class="plan-row">
-
-                    <select id="targetSurah-${name}">
-                        ${buildSurahOptions(plan.targetSurah)}
-                    </select>
-
-                    <select id="targetPage-${name}">
-                        ${buildPageOptions(plan.targetPage)}
-                    </select>
-
-                </div>
-
-                <div class="student-actions">
-
-                    <button
-                        class="save-student-btn plan"
-                        id="savePlanBtn-${name}"
-                        data-name="${name}"
-                    >
-                        📖 Save Plan
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            ${name === "Arefat" ? `
-                <div class="kitab-plan">
-                    <div class="kitab-plan-title">
-                        📚 15-Day Kitab Plan — Safinat an-Naja
-                    </div>
-
-                    <span class="plan-label">📍 Initial Fasl</span>
-                    <div class="plan-row">
-                        <select id="kitabInitialFasl">
-                            ${buildFaslOptions(kitabPlan.initialFasl)}
+        let safinahHTML = "";
+        if (name === "Arefat") {
+            safinahHTML = `
+                <div class="safinah-plan">
+                    <div class="safinah-plan-title">📚 Safinah Shafi'i Kitab Plan</div>
+                    <span class="plan-label">📍 Fasl</span>
+                    <div class="safinah-row">
+                        <select id="safinahFasl-Arefat">
+                            ${buildSafinahOptions(safinah.fasl)}
                         </select>
                     </div>
-
-                    <span class="plan-label">🎯 Final Fasl</span>
-                    <div class="plan-row">
-                        <select id="kitabFinalFasl">
-                            ${buildFaslOptions(kitabPlan.finalFasl)}
-                        </select>
-                    </div>
-
+                    <label class="safinah-check">
+                        <input type="checkbox" id="safinahDone-Arefat" ${safinah.done ? "checked" : ""}>
+                        Mark this Fasl as done
+                    </label>
+                    <div class="plan-error" id="safinahError-Arefat"></div>
                     <div class="student-actions">
-                        <button
-                            class="save-student-btn kitab"
-                            id="saveKitabPlanBtn"
-                        >
-                            📚 Save Kitab Plan
+                        <button class="save-student-btn safinah" id="saveSafinahBtn-Arefat">
+                            📚 Save Safinah Plan
                         </button>
                     </div>
                 </div>
-            ` : ""}
+            `;
+        }
 
+        card.innerHTML = `
+            <div class="student-name">
+                <span>${name}</span>
+                <span class="student-status-badge ${badgeClass}">${badgeText}</span>
+            </div>
+            <div class="options">
+                ${STATUS_OPTIONS.map(option => `
+                    <button
+                        class="opt-btn ${option.key} ${currentAttendance[name] === option.key ? "active" : ""}"
+                        data-name="${name}"
+                        data-status="${option.key}"
+                    >${option.label}</button>
+                `).join("")}
+            </div>
+            <div class="zikir-row">
+                <button class="zikir-btn ${currentZikir[name] ? "active" : ""}" data-name="${name}">
+                    ${currentZikir[name] ? "🕌 Weekly Zikir: Done" : "🕌 Mark Weekly Zikir"}
+                </button>
+            </div>
+            <div class="student-actions">
+                <button class="save-student-btn attendance" id="saveAttBtn-${name}" data-name="${name}">
+                    💾 Save Attendance
+                </button>
+            </div>
+            <div class="quran-plan">
+                <div class="quran-plan-title">📖 15-Day Quran Plan</div>
+                <span class="plan-label">📍 Current Position</span>
+                <div class="plan-row">
+                    <select id="currentSurah-${name}">${buildSurahOptions(plan.currentSurah)}</select>
+                    <select id="currentPage-${name}">${buildPageOptions(plan.currentPage)}</select>
+                </div>
+                <span class="plan-label">🎯 Target Position</span>
+                <div class="plan-row">
+                    <select id="targetSurah-${name}">${buildSurahOptions(plan.targetSurah)}</select>
+                    <select id="targetPage-${name}">${buildPageOptions(plan.targetPage)}</select>
+                </div>
+                <div class="plan-error" id="planError-${name}"></div>
+                <div class="student-actions">
+                    <button class="save-student-btn plan" id="savePlanBtn-${name}" data-name="${name}">
+                        📖 Save Plan
+                    </button>
+                </div>
+            </div>
+            ${safinahHTML}
         `;
-
         list.appendChild(card);
     });
 
-    attachStudentEventListeners();
+    document.querySelectorAll(".opt-btn").forEach(button => {
+        button.onclick = () => {
+            currentAttendance[button.dataset.name] = button.dataset.status;
+            renderStudents();
+        };
+    });
+
+    document.querySelectorAll(".zikir-btn").forEach(button => {
+        button.onclick = () => {
+            const name = button.dataset.name;
+            currentZikir[name] = !currentZikir[name];
+            renderStudents();
+        };
+    });
+
+    document.querySelectorAll(".save-student-btn.attendance").forEach(button => {
+        button.onclick = () => {
+            saveStudentAttendance(
+                button.dataset.name,
+                document.getElementById("attDate").value
+            );
+        };
+    });
+
+    document.querySelectorAll(".save-student-btn.plan").forEach(button => {
+        button.onclick = () => {
+            saveStudentQuranPlan(button.dataset.name);
+        };
+    });
+
+    const safinahBtn = document.getElementById("saveSafinahBtn-Arefat");
+    if (safinahBtn) safinahBtn.onclick = saveSafinahPlan;
 }
 
-function attachStudentEventListeners() {
-
-    document
-    .querySelectorAll(".opt-btn")
-    .forEach(btn => {
-
-        btn.addEventListener(
-            "click",
-            () => {
-
-                const name =
-                    btn.dataset.name;
-
-                const status =
-                    btn.dataset.status;
-
-                currentAttendance[name] =
-                    status;
-
-                renderStudents();
-            }
-        );
-    });
-
-    document
-    .querySelectorAll(".zikir-btn")
-    .forEach(btn => {
-
-        btn.addEventListener(
-            "click",
-            () => {
-
-                const name =
-                    btn.dataset.name;
-
-                currentZikir[name] =
-                    !currentZikir[name];
-
-                renderStudents();
-            }
-        );
-    });
-
-    document
-    .querySelectorAll(
-        ".save-student-btn.attendance"
-    )
-    .forEach(btn => {
-
-        btn.addEventListener(
-            "click",
-            () => {
-
-                const name =
-                    btn.dataset.name;
-
-                const dateKey =
-                    document
-                    .getElementById("attDate")
-                    .value ||
-                    getTodayStr();
-
-                saveStudentAttendance(
-                    name,
-                    dateKey
-                );
-            }
-        );
-    });
-
-    document
-    .querySelectorAll(
-        ".save-student-btn.plan"
-    )
-    .forEach(btn => {
-
-        btn.addEventListener(
-            "click",
-            () => {
-
-                const name =
-                    btn.dataset.name;
-
-                saveStudentQuranPlan(name);
-            }
-        );
-    });
-
-    const saveKitabBtn =
-        document.getElementById("saveKitabPlanBtn");
-
-    if (saveKitabBtn) {
-        saveKitabBtn.addEventListener(
-            "click",
-            saveArefatKitabPlan
-        );
-    }
-}
-
-function generateReportText(dateKey) {
-
-    let text =
-        `📋 Attendance Report - ${dateKey}\n\n`;
-
+function generateReport(dateKey) {
+    let text = `📋 Attendance Report - ${dateKey}\n\n`;
     STUDENTS.forEach(name => {
-
-        const status =
-            currentAttendance[name] ||
-            "Not marked";
-
-        const zikir =
-            currentZikir[name]
-            ? "Done"
-            : "Not done";
-
-        text +=
-            `${name}: ${status} | Weekly Zikir: ${zikir}\n`;
-
-        const quranPlan = currentQuranPlans[name];
-
-        if (
-            quranPlan &&
-            quranPlan.currentSurah &&
-            quranPlan.currentPage &&
-            quranPlan.targetSurah &&
-            quranPlan.targetPage
-        ) {
-            text +=
-                `📖 Quran Plan: ${quranPlan.currentSurah} ` +
-                `(Page ${quranPlan.currentPage}) → ` +
-                `${quranPlan.targetSurah} ` +
-                `(Page ${quranPlan.targetPage})\n`;
+        const plan = currentQuranPlans[name] || {};
+        text += `${name}: ${currentAttendance[name] || "Not marked"} | Weekly Zikir: ${currentZikir[name] ? "Done" : "Not done"}\n`;
+        if (plan.currentSurah) {
+            text += `   📖 Quran: ${plan.currentSurah}, page ${plan.currentPage} → ${plan.targetSurah}, page ${plan.targetPage}\n`;
         }
-
-        if (
-            name === "Arefat" &&
-            currentKitabPlans.Arefat &&
-            currentKitabPlans.Arefat.initialFasl &&
-            currentKitabPlans.Arefat.finalFasl
-        ) {
-            text +=
-                `📚 Kitab Plan — Safinat an-Naja: ` +
-                `${currentKitabPlans.Arefat.initialFasl} → ` +
-                `${currentKitabPlans.Arefat.finalFasl}\n`;
+        if (name === "Arefat") {
+            const safinah = currentSafinah.Arefat || {};
+            if (safinah.fasl) {
+                text += `   📚 Safinah: ${safinah.fasl} (${safinah.done ? "Done" : "Not done"})\n`;
+            }
         }
-
         text += "\n";
     });
-
     return text;
 }
 
+async function sendToController() {
+    const dateKey = document.getElementById("attDate").value;
+    const missing = STUDENTS.filter(name => currentAttendance[name] === undefined);
 
-document.addEventListener(
-    "DOMContentLoaded",
-    async () => {
-
-        const dateInput =
-            document.getElementById("attDate");
-
-        dateInput.value =
-            getTodayStr();
-
-        await checkConnection();
-
-        await loadFromFirebase(
-            dateInput.value
-        );
-
-        await loadHistory();
-
-        dateInput.addEventListener(
-            "change",
-            () => {
-
-                loadFromFirebase(
-                    dateInput.value
-                );
-            }
-        );
-
-        document
-        .getElementById("saveAllBtn")
-        .addEventListener(
-            "click",
-            () => {
-
-                saveAllAttendance(
-                    dateInput.value
-                );
-
-            }
-        );
-
-        document
-        .getElementById("saveAllPlansBtn")
-        .addEventListener(
-            "click",
-            () => {
-
-                saveAllQuranPlans();
-            }
-        );
-
-        document
-        .getElementById("loadBtn")
-        .addEventListener(
-            "click",
-            () => {
-
-                loadFromFirebase(
-                    dateInput.value
-                );
-            }
-        );
-
-        document
-        .getElementById("shareBtn")
-        .addEventListener(
-            "click",
-            () => {
-
-                const text =
-                    generateReportText(
-                        dateInput.value
-                    );
-
-                if (navigator.share) {
-
-                    navigator.share({
-                        title:
-                            "Attendance Report",
-
-                        text:
-                            text
-                    });
-
-                } else {
-
-                    navigator.clipboard
-                    .writeText(text)
-                    .then(() => {
-
-                        showStatus(
-                            "📋 Report copied to clipboard!",
-                            "success"
-                        );
-
-                    })
-                    .catch(() => {
-
-                        showStatus(
-                            "⚠️ Could not copy report automatically. Please copy manually.",
-                            "error"
-                        );
-                    });
-                }
-            }
-        );
+    if (missing.length > 0) {
+        showStatus("⚠️ Mark attendance first for: " + missing.join(", "), "error");
+        return;
     }
-);
-</script>
 
+    const button = document.getElementById("sendControllerBtn");
+    setBusy(button, true, "Sending...", "📨 Send to Controller");
+
+    try {
+        const report = {
+            date: dateKey,
+            attendance: { ...currentAttendance },
+            weeklyZikir: { ...currentZikir },
+            quranPlans: JSON.parse(JSON.stringify(currentQuranPlans)),
+            safinahPlan: currentSafinah.Arefat
+                ? JSON.parse(JSON.stringify(currentSafinah.Arefat))
+                : null,
+            reportText: generateReport(dateKey),
+            sentAt: firebase.database.ServerValue.TIMESTAMP
+        };
+
+        const newReportRef = db.ref("controllerReports").push();
+        await newReportRef.set(report);
+        showStatus("✅ Report sent to Controller successfully!", "success");
+    } catch (error) {
+        showStatus("❌ Could not send report: " + error.message, "error");
+    } finally {
+        setBusy(button, false, "Sending...", "📨 Send to Controller");
+    }
+}
+
+async function loadControllerReports() {
+    const list = document.getElementById("controllerList");
+    try {
+        const snapshot = await db.ref("controllerReports").once("value");
+        const allReports = snapshot.val();
+
+        if (!allReports) {
+            list.innerHTML = '<div class="empty-msg">No reports received yet.</div>';
+            return;
+        }
+
+        list.innerHTML = "";
+        const reports = Object.entries(allReports)
+            .sort((a, b) => (b[1].sentAt || 0) - (a[1].sentAt || 0));
+
+        reports.forEach(([reportId, report]) => {
+            const card = document.createElement("div");
+            card.className = "controller-card";
+
+            let html = `
+                <div class="controller-date">📅 ${report.date || "Unknown date"}</div>
+                <div class="controller-meta">📨 Received by Controller</div>
+            `;
+
+            STUDENTS.forEach(name => {
+                const plan = report.quranPlans && report.quranPlans[name];
+                html += `
+                    <div class="report-line">
+                        <b>${name}</b>:
+                        ${report.attendance && report.attendance[name] ? report.attendance[name] : "Not marked"}
+                        |
+                        Zikir: ${report.weeklyZikir && report.weeklyZikir[name] ? "Done" : "Not done"}
+                `;
+                if (plan && plan.currentSurah) {
+                    html += `
+                        <br>📖 ${plan.currentSurah} page ${plan.currentPage}
+                        → ${plan.targetSurah} page ${plan.targetPage}
+                    `;
+                }
+                if (name === "Arefat" && report.safinahPlan && report.safinahPlan.fasl) {
+                    html += `
+                        <br>📚 Safinah: ${report.safinahPlan.fasl}
+                        (${report.safinahPlan.done ? "Done" : "Not done"})
+                    `;
+                }
+                html += `</div>`;
+            });
+
+            html += `
+                <button class="delete-report" data-id="${reportId}">
+                    🗑️ Delete This Report
+                </button>
+            `;
+
+            card.innerHTML = html;
+            list.appendChild(card);
+        });
+
+        document.querySelectorAll(".delete-report").forEach(button => {
+            button.onclick = async () => {
+                const id = button.dataset.id;
+                if (!confirm("Delete this report?")) return;
+                try {
+                    await db.ref("controllerReports/" + id).remove();
+                    showStatus("🗑️ Report deleted.", "success");
+                    await loadControllerReports();
+                } catch (error) {
+                    showStatus("❌ Delete failed: " + error.message, "error");
+                }
+            };
+        });
+    } catch (error) {
+        list.innerHTML = `<div class="empty-msg">Error: ${error.message}</div>`;
+    }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+    if (isController) {
+        document.getElementById("pageTitle").textContent = "📨 Controller Dashboard";
+        document.getElementById("pageSubtitle").textContent =
+            "View attendance and Quran reports sent to the controller";
+        document.getElementById("mainActions").style.display = "none";
+        document.getElementById("studentList").style.display = "none";
+        document.getElementById("historySection").style.display = "none";
+        document.getElementById("controllerSection").style.display = "block";
+        document.getElementById("attDate").style.display = "none";
+        document.querySelector(".date-section label").style.display = "none";
+        await loadControllerReports();
+        return;
+    }
+
+    const dateInput = document.getElementById("attDate");
+    dateInput.value = getTodayStr();
+    await loadFromFirebase(dateInput.value);
+    await loadHistory();
+
+    dateInput.onchange = () => {
+        loadFromFirebase(dateInput.value);
+    };
+
+    document.getElementById("saveAllBtn").onclick = () => {
+        saveAllAttendance(dateInput.value);
+    };
+
+    document.getElementById("saveAllPlansBtn").onclick = saveAllQuranPlans;
+
+    document.getElementById("loadBtn").onclick = () => {
+        loadFromFirebase(dateInput.value);
+    };
+
+    document.getElementById("shareBtn").onclick = async () => {
+        const text = generateReport(dateInput.value);
+        if (navigator.share) {
+            try {
+                await navigator.share({ title: "Attendance Report", text });
+            } catch (error) {}
+        } else {
+            try {
+                await navigator.clipboard.writeText(text);
+                showStatus("📋 Report copied to clipboard!", "success");
+            } catch (error) {
+                showStatus("⚠️ Could not copy report.", "error");
+            }
+        }
+    };
+
+    document.getElementById("sendControllerBtn").onclick = sendToController;
+});
+</script>
 </body>
 </html>
